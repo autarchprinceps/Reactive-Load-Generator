@@ -5,6 +5,7 @@
 .idea/
 project/target/
 target/
+logs/
 
 ##########
 # Object files
