@@ -1,3 +1,12 @@
+##########
+# own
+##########
+
+.idea/
+project/target
+target/
+
+##########
 # Object files
 *.o
 *.ko
