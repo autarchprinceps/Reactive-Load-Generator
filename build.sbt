@@ -1,4 +1,4 @@
-name := """play-java"""
+name := """LoadGen"""
 
 version := "1.0-SNAPSHOT"
 
