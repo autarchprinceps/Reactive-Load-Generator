@@ -23,12 +23,11 @@ public class LoadWorker extends UntypedActor {
                 }
             }
             for(int i = 0; i < plan.numRuns; i++) {
-                long time = System.currentTimeMillis();
-                // TODO: actually perform test
-                time = System.currentTimeMillis() - time;
                 LoadWorkerRaw msg = new LoadWorkerRaw();
                 msg.testId = plan.testId;
-                msg.time = time;
+                msg.start = System.currentTimeMillis();
+                // TODO: actually perform test
+                msg.end = System.currentTimeMillis();
                 init.subscribers.parallelStream().forEach((actorRef -> {
                     actorRef.tell(msg, getSelf());
                 }));

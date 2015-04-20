@@ -5,5 +5,6 @@ package aktors.messages;
  */
 public class LoadWorkerRaw {
     public int testId;
-    public long time;
+    public long start;
+    public long end;
 }
