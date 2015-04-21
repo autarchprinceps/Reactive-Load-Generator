@@ -28,9 +28,7 @@ public class LoadWorker extends UntypedActor {
                 msg.start = System.currentTimeMillis();
                 // TODO: actually perform test
                 msg.end = System.currentTimeMillis();
-                init.subscribers.parallelStream().forEach((actorRef -> {
-                    actorRef.tell(msg, getSelf());
-                }));
+                init.subscribers.parallelStream().forEach((actorRef -> actorRef.tell(msg, getSelf())));
                 if(plan.waitBetweenMsgs > 0) {
                     try {
                         Thread.sleep(plan.waitBetweenMsgs);
