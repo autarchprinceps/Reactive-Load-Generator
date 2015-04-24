@@ -5,6 +5,7 @@ package aktors.messages;
  */
 public class LoadWorkerRaw {
     public Testrun testrun;
+    public int iterOnWorker;
     public long start;
     public long end;
 }

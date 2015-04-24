@@ -27,6 +27,7 @@ public class LoadWorker extends UntypedActor {
                 for (int i = 0; i < plan.numRuns; i++) {
                     LoadWorkerRaw msg = new LoadWorkerRaw();
                     msg.testrun = init;
+                    msg.iterOnWorker = i;
                     msg.start = System.currentTimeMillis();
                     // TODO: actually perform test
                     msg.end = System.currentTimeMillis();
