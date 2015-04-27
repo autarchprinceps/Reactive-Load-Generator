@@ -22,6 +22,8 @@ public class LoadRunner extends UntypedActor {
 
     @Override
     public void onReceive(Object message) {
+        
+        /*
         if(message instanceof Testplan) {
             testrun = new Testrun();
             testrun.id = 0; // TODO replace 0
@@ -47,5 +49,6 @@ public class LoadRunner extends UntypedActor {
                     break;
             }
         }
+        */
     }
 }

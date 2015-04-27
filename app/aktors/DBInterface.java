@@ -22,7 +22,7 @@ public class DBInterface extends UntypedActor {
             Testplan plan = (Testplan)message;
             // db.testplan.insert({id:plan.id, ..})
         } else {
-            unhandle(message);
+            unhandled(message);
         }
     }
 
