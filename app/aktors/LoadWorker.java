@@ -1,10 +1,26 @@
 package aktors;
 
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.io.InputStreamReader;
+
+
+
+
+
 import akka.actor.UntypedActor;
+
+import java.net.URL;
+
 import aktors.messages.Testrun;
 import aktors.messages.LoadWorkerRaw;
 import aktors.messages.Testplan;
 import aktors.messages.WorkerCMD;
+
+
+
 
 /**
  * Created by Patrick Robinson on 20.04.15.
@@ -29,7 +45,43 @@ public class LoadWorker extends UntypedActor {
                     msg.testrun = init;
                     msg.iterOnWorker = i;
                     msg.start = System.currentTimeMillis();
-                    // TODO: actually perform test
+                    
+                    
+                    // HTTP GET Request
+                    
+                    try {
+                    	HttpURLConnection connection = null;
+                    	URL url = plan.path;
+
+                    	connection = (HttpURLConnection)url.openConnection();
+
+                    	connection.setRequestMethod("GET");
+
+                    	int responseCode = connection.getResponseCode();
+                    	System.out.println("\nSending 'GET' request to URL : " + url);
+                    	System.out.println("Response Code : " + responseCode);
+
+                    	BufferedReader in = new BufferedReader(
+                    			new InputStreamReader(connection.getInputStream()));
+                    	String inputLine;
+                    	StringBuffer response = new StringBuffer();
+
+                    	while ((inputLine = in.readLine()) != null) {
+                    		response.append(inputLine);
+                    	}
+                    	in.close();
+
+                    	//print result
+                    	System.out.println(response.toString());
+                    } catch (Exception e1) {
+                    	// TODO Auto-generated catch block
+                    	e1.printStackTrace();
+                    }
+
+                    
+                    
+                    
+                    System.out.println("Loadworker performing the actual test");
                     msg.end = System.currentTimeMillis();
                     init.subscribers.parallelStream().forEach((actorRef -> actorRef.tell(msg, getSelf())));
                     if (plan.waitBetweenMsgs > 0) {
