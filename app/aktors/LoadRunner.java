@@ -32,7 +32,7 @@ public class LoadRunner extends UntypedActor {
             testrun.id = 0; // TODO replace 0
             testrun.testplan = (Testplan)message;
             final ActorSystem system = ActorSystem.create();
-            db = system.actorOf(Props.create(DBInterface.class), "database");
+            db = system.actorOf(Props.create(DB.class), "database");
             System.out.println("initialized DB Aktor");
             testrun.subscribers.add(db);
             db.tell(testrun, getSelf());
