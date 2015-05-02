@@ -57,9 +57,10 @@
             function update(newMessage) {
                 data.push(newMessage);
                 
-                x.domain([0, d3.max(data, function (d) {
+                var maxx = d3.max(data, function (d) {
                     return d.start;
-                })]);
+                });
+                x.domain([0, maxx]);
                 y.domain([0, d3.max(data, function (d) {
                     return d.end - d.start;
                 })]);
@@ -75,7 +76,8 @@
                     })
                     .attr('cy', function (d) {
                         return y(d.end - d.start);
-                    });
+                    })
+                    .attr('r', 25 * Math.log(maxx) / Math.sqrt(maxx));
                 
                 datapoints.enter().append('circle')
                     .transition()
@@ -86,7 +88,7 @@
                     .attr('cy', function (d) {
                         return y(d.end - d.start);
                     })
-                    .attr('r', 2);
+                    .attr('r', 25 * Math.log(maxx) / Math.sqrt(maxx));
                 chart.select('.x')
                     .transition()
                     .duration(400)
