@@ -17,4 +17,5 @@ public class Testplan {
     public int waitBetweenMsgs = 0;
     public int waitBeforeStart = 0;
     public ConnectionType connectionType = ConnectionType.HTTP;
+    public User user;
 }

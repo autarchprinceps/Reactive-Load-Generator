@@ -158,6 +158,5 @@
     <orderEntry type="library" name="SBT: org.mongodb:casbah-query_2.11:2.8.1:jar" level="project" />
     <orderEntry type="library" name="SBT: org.mongodb:mongo-java-driver:2.13.1:jar" level="project" />
     <orderEntry type="library" name="SBT: org.scala-lang:scala-library:2.11.5:jar" level="project" />
-    <orderEntry type="library" name="scala-sdk-2.10.4" level="application" />
   </component>
 </module>
