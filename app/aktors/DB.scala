@@ -88,7 +88,7 @@ class DB extends UntypedActor {
 			val runDocument = testruncoll.findOneByID(id)
 			val runObject = new Testrun()
 			runObject.id = id
-			runObject.testplan = getPlan()
+			runObject.testplan = getPlan(runDocument.get.get("testPlanId").asInstanceOf[Int])
 			return runObject
 		}
 	}

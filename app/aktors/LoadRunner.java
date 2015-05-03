@@ -9,9 +9,6 @@ import aktors.messages.Testplan;
 import aktors.messages.Testrun;
 import aktors.messages.WorkerCMD;
 
-import aktors.DBInterface;
-import aktors.LoadWorker;
-
 import java.util.ArrayList;
 import java.util.List;
 
