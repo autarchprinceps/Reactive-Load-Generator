@@ -68,7 +68,7 @@ class DB(database : String) extends UntypedActor {
 				}
 			}
 			case del : DBDelCMD => {
-				val coll = usercoll
+				var coll = usercoll
 				del.t match {
 					case DBDelCMD.Type.Plan => coll = testplancoll
 					case DBDelCMD.Type.Plan => coll = testruncoll
