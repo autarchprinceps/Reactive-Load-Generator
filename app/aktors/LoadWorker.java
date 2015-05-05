@@ -98,7 +98,7 @@ public class LoadWorker extends UntypedActor {
             WorkerCMD cmd = (WorkerCMD)message;
             if(cmd == WorkerCMD.Stop) {
                 t.stop();
-                // TODO selfdestruct
+                getContext().stop(getSelf());
             }
         } else {
             unhandled(message);

@@ -12,11 +12,14 @@ import com.mongodb.casbah.commons.MongoDBObject
 /**
  * Created by Patrick Robinson on 02.05.15.
  */
-class DB extends UntypedActor {
-	val db = MongoClient()("loadgen")
+class DB(database : String) extends UntypedActor {
+	val client = MongoClient()
+	val db = client(database)
 	val testruncoll = db("testrun")
 	val testplancoll = db("testplan")
 	val usercoll = db("user")
+
+	def this() = this("loadgen")
 
 	@throws[Exception](classOf[Exception])
 	override def onReceive(message: Any): Unit = {
@@ -44,14 +47,31 @@ class DB extends UntypedActor {
 			))
 			case get : DBGetCMD => {
 				get.t match {
-					case DBGetCMD.Type.AllPlansForUser => {
-						testplancoll.filter("user" $eq get.id).foreach(planDocument => {
+					case DBGetCMD.Type.AllPlansForUser => testplancoll.filter("user" $eq get.id).foreach(planDocument => {
 							getSender().tell(convertPlan(planDocument), getSelf())
 						})
-					}
 					case DBGetCMD.Type.PlanByID => getSender().tell(getPlan(get.id), getSelf())
 					case DBGetCMD.Type.RunByID => getSender().tell(getRun(get.id), getSelf())
 					case DBGetCMD.Type.UserByID => getSender().tell(getUser(get.id), getSelf())
+				}
+			}
+			case del : DBDelCMD => {
+				val coll = usercoll
+				del.t match {
+					case DBDelCMD.Type.Plan => coll = testplancoll
+					case DBDelCMD.Type.Plan => coll = testruncoll
+					case DBDelCMD.Type.User => coll = usercoll
+					case _ => return
+				}
+				coll.remove("_id" -> del.id)
+			}
+			case simple : String => {
+				simple match {
+					case "close" => {
+						client.close()
+						getContext.stop(getSelf)
+					}
+					case _ => unhandled(message)
 				}
 			}
 			case _ => unhandled(message)

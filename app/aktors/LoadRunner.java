@@ -29,7 +29,7 @@ public class LoadRunner extends UntypedActor {
             testrun.id = 0; // TODO replace 0
             testrun.testplan = (Testplan)message;
             final ActorSystem system = ActorSystem.create();
-            db = system.actorOf(Props.create(DB.class), "database");
+            db = system.actorOf(Props.create(DB.class));
             System.out.println("initialized DB Aktor");
             testrun.subscribers.add(db);
             db.tell(testrun, getSelf());
@@ -47,7 +47,8 @@ public class LoadRunner extends UntypedActor {
                     break;
                 case Stop:
                     workers.parallelStream().forEach((x) -> x.tell(WorkerCMD.Stop, getSelf()));
-                    // TODO selfdestruct
+                    db.tell("close", getSelf());
+                    getContext().stop(getSelf());
                     break;
             }
         }
