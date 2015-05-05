@@ -6,7 +6,7 @@ import akka.actor.UntypedActor
 import aktors.messages.Testplan.ConnectionType
 import aktors.messages._
 import com.mongodb.DBObject
-import com.mongodb.casbah.MongoClient
+import com.mongodb.casbah.{MongoCollection, MongoClient}
 import com.mongodb.casbah.commons.MongoDBObject
 
 /**
@@ -53,6 +53,18 @@ class DB(database : String) extends UntypedActor {
 					case DBGetCMD.Type.PlanByID => getSender().tell(getPlan(get.id), getSelf())
 					case DBGetCMD.Type.RunByID => getSender().tell(getRun(get.id), getSelf())
 					case DBGetCMD.Type.UserByID => getSender().tell(getUser(get.id), getSelf())
+					case DBGetCMD.Type.RunRaws => {
+						val testrunobj = testruncoll.findOneByID(get.id).get;
+						val testrun = convertRun(testrunobj)
+						testrunobj.get("runs").asInstanceOf[MongoCollection].foreach(obj => {
+							val raw = new LoadWorkerRaw()
+							raw.testrun = testrun
+							raw.start = obj.get("start").asInstanceOf[Int]
+							raw.end = obj.get("end").asInstanceOf[Int]
+							raw.iterOnWorker = obj.get("iter").asInstanceOf[Int]
+							getSender().tell(raw, getSelf())
+						})
+					}
 				}
 			}
 			case del : DBDelCMD => {
@@ -86,7 +98,7 @@ class DB(database : String) extends UntypedActor {
 			return userObject
 		}
 
-		def convertPlan(document : DBObject) : Testplan = {
+		def convertPlan(document : testplancoll.T) : Testplan = {
 			// TODO use github.com/scala/async ?
 			// TODO utilise currentuser, when account subsystem is implemented?
 			val planObject = new Testplan()
@@ -103,12 +115,12 @@ class DB(database : String) extends UntypedActor {
 
 		def getPlan(id : Int) : Testplan = convertPlan(testplancoll.findOneByID(id).get)
 
-		def getRun(id : Int) : Testrun = {
-			// TODO use github.com/scala/async .. see getPlan
-			val runDocument = testruncoll.findOneByID(id)
+		def getRun(id : Int) : Testrun = convertRun(testruncoll.findOneByID(id).get)
+
+		def convertRun(runDocument : testruncoll.T) = {
 			val runObject = new Testrun()
 			runObject.id = id
-			runObject.testplan = getPlan(runDocument.get.get("testPlanId").asInstanceOf[Int])
+			runObject.testplan = getPlan(runDocument.get("testPlanId").asInstanceOf[Int])
 			return runObject
 		}
 	}

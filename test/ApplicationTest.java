@@ -109,7 +109,7 @@ public class ApplicationTest {
         Random random = new Random();
         runs.parallelStream().forEach(testrun -> {
             List<LoadWorkerRaw> tmps = new ArrayList<>();
-            for(int i = 0; i < 20000; i++) {
+            for (int i = 0; i < 20000; i++) {
                 LoadWorkerRaw tmp = new LoadWorkerRaw();
                 tmp.testrun = testrun;
                 tmp.start = random.nextInt(i);
@@ -121,8 +121,9 @@ public class ApplicationTest {
         });
         raws.forEach((testrun, loadWorkerRaws) -> loadWorkerRaws.parallelStream().forEach(loadWorkerRaw -> inbox.send(db_ref, loadWorkerRaw)));
 
-        for(int i = 0; i < raws.size(); i++) {
-            // TODO DB doesn't implement getRaws yet
+        for(int i = 0; i < raws.size() * 20000; i++) {
+            LoadWorkerRaw tmp = (LoadWorkerRaw)inbox.receive(Duration.create(1, TimeUnit.MINUTES));
+            assertThat(raws.get(tmp.testrun).contains(tmp));
         }
 
         inbox.send(db_ref, "close");

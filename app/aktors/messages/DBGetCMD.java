@@ -5,7 +5,7 @@ package aktors.messages;
  */
 public class DBGetCMD {
     public enum Type {
-        AllPlansForUser, PlanByID, RunByID, UserByID // TODO runRaw?
+        AllPlansForUser, PlanByID, RunByID, UserByID, RunRaws
     }
 
     public Type t;
