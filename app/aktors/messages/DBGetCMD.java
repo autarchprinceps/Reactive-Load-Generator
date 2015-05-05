@@ -7,7 +7,7 @@ import org.bson.types.ObjectId;
  */
 public class DBGetCMD {
     public enum Type {
-        AllPlansForUser, PlanByID, RunByID, UserByID, RunRaws
+        AllPlansForUser, AllRunsForPlan, PlanByID, RunByID, UserByID, RunRaws
     }
 
     public Type t;

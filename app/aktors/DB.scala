@@ -46,11 +46,10 @@ class DB(database : String) extends UntypedActor {
 			case getCMD : DBGetCMD => {
 				getCMD.t match {
 					case DBGetCMD.Type.AllPlansForUser => {
-						testplancoll
-							.find("user" $eq getCMD.id) // TODO FIX
-							.foreach(planDocument => {
-							getSender().tell(convertPlan(planDocument), getSelf())
-						})
+						testplancoll.find("user" $eq getCMD.id).foreach(planDocument => getSender().tell(convertPlan(planDocument), getSelf()))
+					}
+					case DBGetCMD.Type.AllRunsForPlan => {
+						testruncoll.find("testPlanId" $eq getCMD.id).foreach(runDocument => getSender().tell(convertRun(runDocument), getSelf()))
 					}
 					case DBGetCMD.Type.PlanByID => getSender().tell(getPlan(getCMD.id), getSelf())
 					case DBGetCMD.Type.RunByID => getSender().tell(getRun(getCMD.id), getSelf())

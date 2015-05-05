@@ -38,12 +38,16 @@ public class ApplicationTest {
 
     @Test
     public void simpleCheck() {
+        System.out.println("simpleCheck");
+        // assertThat(false);
         int a = 1 + 1;
-        assertThat(a).isEqualTo(2);
+        assertThat(a).isEqualTo(5);
     }
 
     @Test
     public void renderTemplate() {
+        System.out.println("renderTemplate");
+        // assertThat(false);
         Content html = views.html.index.render("Your new application is ready.");
         assertThat(contentType(html)).isEqualTo("text/html");
         assertThat(contentAsString(html)).contains("Your new application is ready.");
@@ -51,6 +55,8 @@ public class ApplicationTest {
 
     @Test
     public void dbTest() {
+        System.out.println("dbTest");
+        // assertThat(false);
         Random random = new Random();
         ActorSystem as = ActorSystem.create();
         DB db = new DB("junit_loadgen"); // TODO bind to ActorSystem? or tell actorsystem to use non empty constructor
@@ -186,6 +192,8 @@ public class ApplicationTest {
         Collections.copy(copy, plans);
         copy.sort((t1, t2) -> t1.testId.compareTo(t2.testId));
         assertThat(testplanList).isEqualTo(copy);
+        // get all run for plan
+        // TODO
 
 	    // delete
 	    runs.parallelStream().forEach(testrun -> {
