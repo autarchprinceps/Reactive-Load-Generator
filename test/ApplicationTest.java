@@ -98,12 +98,12 @@ public class ApplicationTest {
 
         // insert runs
         plans.parallelStream().forEach(testplan1 -> {
-            for(int i = 0; i < 5) {
+            for (int i = 0; i < 5; i++) {
                 Testrun tmp = new Testrun();
                 tmp.testplan = testplan1;
                 tmp.id = new ObjectId();
-	            inbox.send(db_ref, tmp);
-	            runs.add(tmp);
+                inbox.send(db_ref, tmp);
+                runs.add(tmp);
             }
         });
 
@@ -169,10 +169,43 @@ public class ApplicationTest {
         }
 
 	    // get all plans for user
-	    // TODO how?
+        List<Testplan> testplanList = new ArrayList<>(plans.size());
+        users.parallelStream().map(user -> {
+            DBGetCMD result = new DBGetCMD();
+            result.t = DBGetCMD.Type.AllPlansForUser;
+            result.id = user.id;
+            return result;
+        }).forEach(dbGetCMD -> inbox.send(db_ref, dbGetCMD));
+
+        for(int i = 0; i < plans.size(); i++) {
+            Testplan tmp = (Testplan)inbox.receive(Duration.create(1, TimeUnit.MINUTES));
+            testplanList.add(tmp);
+        }
+        testplanList.sort((t1, t2) -> t1.testId.compareTo(t2.testId));
+        List<Testplan> copy = new ArrayList<>(plans.size());
+        Collections.copy(copy, plans);
+        copy.sort((t1, t2) -> t1.testId.compareTo(t2.testId));
+        assertThat(testplanList).isEqualTo(copy);
 
 	    // delete
-	    // TODO
+	    runs.parallelStream().forEach(testrun -> {
+            DBDelCMD delCMD = new DBDelCMD();
+            delCMD.t = DBDelCMD.Type.Run;
+            delCMD.id = testrun.id;
+            inbox.send(db_ref, delCMD);
+        });
+        plans.parallelStream().forEach(testplan -> {
+            DBDelCMD delCMD = new DBDelCMD();
+            delCMD.t = DBDelCMD.Type.Plan;
+            delCMD.id = testplan.testId;
+            inbox.send(db_ref, delCMD);
+        });
+        users.parallelStream().forEach(user -> {
+            DBDelCMD delCMD = new DBDelCMD();
+            delCMD.t = DBDelCMD.Type.User;
+            delCMD.id = user.id;
+            inbox.send(db_ref, delCMD);
+        });
 
         inbox.send(db_ref, "close");
     }
