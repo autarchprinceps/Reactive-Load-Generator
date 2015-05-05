@@ -5,9 +5,9 @@ import java.net.URL
 import akka.actor.UntypedActor
 import aktors.messages.Testplan.ConnectionType
 import aktors.messages._
-import com.mongodb.DBObject
 import com.mongodb.casbah.{MongoCollection, MongoClient}
 import com.mongodb.casbah.commons.MongoDBObject
+import org.bson.types.ObjectId
 
 /**
  * Created by Patrick Robinson on 02.05.15.
@@ -45,17 +45,22 @@ class DB(database : String) extends UntypedActor {
 				"_id" -> user.id
 			,	"name" -> user.name
 			))
-			case get : DBGetCMD => {
-				get.t match {
-					case DBGetCMD.Type.AllPlansForUser => testplancoll.filter("user" $eq get.id).foreach(planDocument => {
+			case getCMD : DBGetCMD => {
+				getCMD.t match {
+					case DBGetCMD.Type.AllPlansForUser => {
+						testplancoll
+							.filter("user" $eq getCMD.id)
+							.foreach(planDocument => {
 							getSender().tell(convertPlan(planDocument), getSelf())
 						})
-					case DBGetCMD.Type.PlanByID => getSender().tell(getPlan(get.id), getSelf())
-					case DBGetCMD.Type.RunByID => getSender().tell(getRun(get.id), getSelf())
-					case DBGetCMD.Type.UserByID => getSender().tell(getUser(get.id), getSelf())
+					}
+					case DBGetCMD.Type.PlanByID => getSender().tell(getPlan(getCMD.id), getSelf())
+					case DBGetCMD.Type.RunByID => getSender().tell(getRun(getCMD.id), getSelf())
+					case DBGetCMD.Type.UserByID => getSender().tell(getUser(getCMD.id), getSelf())
 					case DBGetCMD.Type.RunRaws => {
-						val testrunobj : testruncoll.T = testruncoll.findOneByID(get.id).get;
-						val testrun = convertRun(testrunobj)
+						val testrunobj = testruncoll.findOneByID(getCMD.id).get
+						new ObjectId()
+						val testrun = convertRun(testrunobj) // TODO expensive, can cut somehow?
 						testrunobj.get("runs").asInstanceOf[MongoCollection].foreach(obj => {
 							val raw = new LoadWorkerRaw()
 							raw.testrun = testrun
@@ -75,7 +80,7 @@ class DB(database : String) extends UntypedActor {
 					case DBDelCMD.Type.User => coll = usercoll
 					case _ => return
 				}
-				coll.remove("_id" -> del.id)
+				coll.findAndRemove(MongoDBObject("_id" -> del.id))
 			}
 			case simple : String => {
 				simple match {
@@ -89,12 +94,12 @@ class DB(database : String) extends UntypedActor {
 			case _ => unhandled(message)
 		}
 
-		def getUser(id : Int) : User = {
+		def getUser(id : ObjectId) : User = {
 			// TODO cache?
-			val userDocument = usercoll.findOneByID(id)
+			val userDocument = usercoll.findOneByID(id).get
 			val userObject = new User()
 			userObject.id = id
-			userObject.name = userDocument.get.get("name").asInstanceOf[String]
+			userObject.name = userDocument.get("name").asInstanceOf[String]
 			return userObject
 		}
 
@@ -102,8 +107,8 @@ class DB(database : String) extends UntypedActor {
 			// TODO use github.com/scala/async ?
 			// TODO utilise currentuser, when account subsystem is implemented?
 			val planObject = new Testplan()
-			planObject.user = getUser(document.get("user").asInstanceOf[Int])
-			planObject.testId = document.get("_id").asInstanceOf[Int]
+			planObject.user = getUser(document.get("user").asInstanceOf[ObjectId])
+			planObject.testId = document.get("_id").asInstanceOf[ObjectId]
 			planObject.waitBeforeStart = document.get("waitBeforeStart").asInstanceOf[Int]
 			planObject.waitBetweenMsgs = document.get("waitBetweenMsgs").asInstanceOf[Int]
 			planObject.parallelity = document.get("parallelity").asInstanceOf[Int]
@@ -113,14 +118,14 @@ class DB(database : String) extends UntypedActor {
 			return planObject
 		}
 
-		def getPlan(id : Int) : Testplan = convertPlan(testplancoll.findOneByID(id).get)
+		def getPlan(id : ObjectId) : Testplan = convertPlan(testplancoll.findOneByID(id).get)
 
-		def getRun(id : Int) : Testrun = convertRun(testruncoll.findOneByID(id).get)
+		def getRun(id : ObjectId) : Testrun = convertRun(testruncoll.findOneByID(id).get)
 
 		def convertRun(runDocument : testruncoll.T) : Testrun = {
 			val runObject = new Testrun()
-			runObject.id = runDocument.get("_id").asInstanceOf[Int]
-			runObject.testplan = getPlan(runDocument.get("testPlanId").asInstanceOf[Int])
+			runObject.id = runDocument.get("_id").asInstanceOf[ObjectId]
+			runObject.testplan = getPlan(runDocument.get("testPlanId").asInstanceOf[ObjectId])
 			return runObject
 		}
 	}

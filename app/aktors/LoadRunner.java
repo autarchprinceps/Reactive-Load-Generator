@@ -8,6 +8,7 @@ import aktors.messages.RunnerCMD;
 import aktors.messages.Testplan;
 import aktors.messages.Testrun;
 import aktors.messages.WorkerCMD;
+import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +27,7 @@ public class LoadRunner extends UntypedActor {
         if(message instanceof Testplan) {
         	System.out.println("loadrunner received Testplan");
             testrun = new Testrun();
-            testrun.id = 0; // TODO replace 0
+            testrun.id = new ObjectId();
             testrun.testplan = (Testplan)message;
             final ActorSystem system = ActorSystem.create();
             db = system.actorOf(Props.create(DB.class));
@@ -37,7 +38,7 @@ public class LoadRunner extends UntypedActor {
             workers = new ArrayList<>(testrun.testplan.parallelity);
             for(int i = 0; i < testrun.testplan.parallelity; i++) {
                 workers.add(system.actorOf(Props.create(LoadWorker.class), "worker"));
-                System.out.println("initialized new Worker"); 
+                System.out.println("initialized new Worker");
             }
         } else if(message instanceof RunnerCMD) {
             RunnerCMD cmd = (RunnerCMD)message;
@@ -52,6 +53,6 @@ public class LoadRunner extends UntypedActor {
                     break;
             }
         }
-        
+
     }
 }

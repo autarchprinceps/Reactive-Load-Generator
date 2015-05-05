@@ -1,5 +1,7 @@
 package aktors.messages;
 
+import org.bson.types.ObjectId;
+
 import java.net.URL;
 
 /**
@@ -10,7 +12,7 @@ public class Testplan {
         HTTP, TCP, UDP, WebSocket
     }
 
-    public int testId;
+    public ObjectId testId;
     public int numRuns; // Per Parallel Worker
     public int parallelity;
     public URL path;
