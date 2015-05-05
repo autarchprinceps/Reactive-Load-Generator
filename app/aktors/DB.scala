@@ -54,7 +54,7 @@ class DB(database : String) extends UntypedActor {
 					case DBGetCMD.Type.RunByID => getSender().tell(getRun(get.id), getSelf())
 					case DBGetCMD.Type.UserByID => getSender().tell(getUser(get.id), getSelf())
 					case DBGetCMD.Type.RunRaws => {
-						val testrunobj = testruncoll.findOneByID(get.id).get;
+						val testrunobj : testruncoll.T = testruncoll.findOneByID(get.id).get;
 						val testrun = convertRun(testrunobj)
 						testrunobj.get("runs").asInstanceOf[MongoCollection].foreach(obj => {
 							val raw = new LoadWorkerRaw()
@@ -117,7 +117,7 @@ class DB(database : String) extends UntypedActor {
 
 		def getRun(id : Int) : Testrun = convertRun(testruncoll.findOneByID(id).get)
 
-		def convertRun(runDocument : testruncoll.T) = {
+		def convertRun(runDocument : testruncoll.T) : Testrun = {
 			val runObject = new Testrun()
 			runObject.id = id
 			runObject.testplan = getPlan(runDocument.get("testPlanId").asInstanceOf[Int])
