@@ -5,9 +5,10 @@ import java.net.URL
 import akka.actor.UntypedActor
 import aktors.messages.Testplan.ConnectionType
 import aktors.messages._
-import com.mongodb.casbah.{MongoCollection, MongoClient}
-import com.mongodb.casbah.commons.MongoDBObject
-import org.bson.types.ObjectId
+import com.mongodb.casbah.Imports._
+// import com.mongodb.casbah.{MongoCollection, MongoClient}
+// import com.mongodb.casbah.commons.MongoDBObject
+// import org.bson.types.ObjectId
 
 /**
  * Created by Patrick Robinson on 02.05.15.
@@ -49,7 +50,7 @@ class DB(database : String) extends UntypedActor {
 				getCMD.t match {
 					case DBGetCMD.Type.AllPlansForUser => {
 						testplancoll
-							.filter("user" $eq getCMD.id)
+							.filter("user" $eq getCMD.id) // TODO FIX
 							.foreach(planDocument => {
 							getSender().tell(convertPlan(planDocument), getSelf())
 						})
@@ -59,14 +60,13 @@ class DB(database : String) extends UntypedActor {
 					case DBGetCMD.Type.UserByID => getSender().tell(getUser(getCMD.id), getSelf())
 					case DBGetCMD.Type.RunRaws => {
 						val testrunobj = testruncoll.findOneByID(getCMD.id).get
-						new ObjectId()
 						val testrun = convertRun(testrunobj) // TODO expensive, can cut somehow?
-						testrunobj.get("runs").asInstanceOf[MongoCollection].foreach(obj => {
+						testrunobj.getAs[MongoCollection]("runs").get.foreach(obj => { // TODO works?
 							val raw = new LoadWorkerRaw()
 							raw.testrun = testrun
-							raw.start = obj.get("start").asInstanceOf[Int]
-							raw.end = obj.get("end").asInstanceOf[Int]
-							raw.iterOnWorker = obj.get("iter").asInstanceOf[Int]
+							raw.start = obj.getAs[Long]("start").get
+							raw.end = obj.getAs[Long]("end").get
+							raw.iterOnWorker = obj.getAs[Int]("iter").get
 							getSender().tell(raw, getSelf())
 						})
 					}
@@ -99,7 +99,7 @@ class DB(database : String) extends UntypedActor {
 			val userDocument = usercoll.findOneByID(id).get
 			val userObject = new User()
 			userObject.id = id
-			userObject.name = userDocument.get("name").asInstanceOf[String]
+			userObject.name = userDocument.getAs[String]("name").get
 			return userObject
 		}
 
@@ -107,14 +107,14 @@ class DB(database : String) extends UntypedActor {
 			// TODO use github.com/scala/async ?
 			// TODO utilise currentuser, when account subsystem is implemented?
 			val planObject = new Testplan()
-			planObject.user = getUser(document.get("user").asInstanceOf[ObjectId])
-			planObject.testId = document.get("_id").asInstanceOf[ObjectId]
-			planObject.waitBeforeStart = document.get("waitBeforeStart").asInstanceOf[Int]
-			planObject.waitBetweenMsgs = document.get("waitBetweenMsgs").asInstanceOf[Int]
-			planObject.parallelity = document.get("parallelity").asInstanceOf[Int]
-			planObject.numRuns = document.get("numRuns").asInstanceOf[Int]
-			planObject.path = new URL(document.get("path").asInstanceOf[String])
-			planObject.connectionType = ConnectionType.valueOf(document.get("connectionType").asInstanceOf[String])
+			planObject.user = getUser(document.getAs[ObjectId]("user").get)
+			planObject.testId = document.getAs[ObjectId]("_id").get
+			planObject.waitBeforeStart = document.getAs[Int]("waitBeforeStart").get
+			planObject.waitBetweenMsgs = document.getAs[Int]("waitBetweenMsgs").get
+			planObject.parallelity = document.getAs[Int]("parallelity").get
+			planObject.numRuns = document.getAs[Int]("numRuns").get
+			planObject.path = new URL(document.getAs[String]("path").get)
+			planObject.connectionType = ConnectionType.valueOf(document.getAs[String]("connectionType").get)
 			return planObject
 		}
 
@@ -124,8 +124,8 @@ class DB(database : String) extends UntypedActor {
 
 		def convertRun(runDocument : testruncoll.T) : Testrun = {
 			val runObject = new Testrun()
-			runObject.id = runDocument.get("_id").asInstanceOf[ObjectId]
-			runObject.testplan = getPlan(runDocument.get("testPlanId").asInstanceOf[ObjectId])
+			runObject.id = runDocument.getAs[ObjectId]("_id").get
+			runObject.testplan = getPlan(runDocument.getAs[ObjectId]("testPlanId").get)
 			return runObject
 		}
 	}
