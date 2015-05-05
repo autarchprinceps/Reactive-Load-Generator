@@ -73,7 +73,7 @@ class DB(database : String) extends UntypedActor {
 				var coll = usercoll
 				del.t match {
 					case DBDelCMD.Type.Plan => coll = testplancoll
-					case DBDelCMD.Type.Plan => coll = testruncoll
+					case DBDelCMD.Type.Run => coll = testruncoll
 					case DBDelCMD.Type.User => coll = usercoll
 					case _ => return
 				}
