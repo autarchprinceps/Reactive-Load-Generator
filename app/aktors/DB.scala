@@ -119,7 +119,7 @@ class DB(database : String) extends UntypedActor {
 
 		def convertRun(runDocument : testruncoll.T) : Testrun = {
 			val runObject = new Testrun()
-			runObject.id = id
+			runObject.id = runDocument.get("_id").asInstanceOf[Int]
 			runObject.testplan = getPlan(runDocument.get("testPlanId").asInstanceOf[Int])
 			return runObject
 		}
