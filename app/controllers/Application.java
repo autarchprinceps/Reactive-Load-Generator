@@ -15,6 +15,7 @@ import aktors.LoadWorker;
 import aktors.messages.Testplan;
 import aktors.messages.Testrun;
 import aktors.messages.Testplan.ConnectionType;
+import org.bson.types.ObjectId;
 import play.*;
 import play.data.Form;
 import play.mvc.*;
@@ -25,11 +26,11 @@ public class Application extends Controller {
     public static Result index() {
         return ok(index.render("hello"));
     }
-    
+
     public static Result startTest() throws MalformedURLException {
-    	
-    	
-    	
+
+
+
     	//initialize first Test directly on a loadworker
         final ActorSystem system = ActorSystem.create("Loadgenerator");
         final ActorRef loadworker = system.actorOf(Props.create(LoadWorker.class), "loadworker");
@@ -39,22 +40,22 @@ public class Application extends Controller {
 
         //create test testplan and run
         Testplan myTestplan = new Testplan();
-        myTestplan.testId = 0;
+        myTestplan.testId = new ObjectId();
         myTestplan.numRuns = 1; // Per Parallel Worker
         myTestplan.parallelity = 1;
         myTestplan.path = new URL("http://www.google.com");
         myTestplan.waitBetweenMsgs = 0;
         myTestplan.waitBeforeStart = 0;
         myTestplan.connectionType = ConnectionType.HTTP;
-        
+
         Testrun myTestrun = new Testrun();
-        myTestrun.id = 0;
+        myTestrun.id = new ObjectId();
         myTestrun.testplan = myTestplan;
         myTestrun.subscribers.add(loadworker);
-        
+
         //let loadworker work
-        loadworker.tell(myTestrun, ActorRef.noSender());        
-        
+        loadworker.tell(myTestrun, ActorRef.noSender());
+
     	return redirect(routes.Application.index());
     }
 

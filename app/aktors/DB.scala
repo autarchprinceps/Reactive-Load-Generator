@@ -6,9 +6,6 @@ import akka.actor.UntypedActor
 import aktors.messages.Testplan.ConnectionType
 import aktors.messages._
 import com.mongodb.casbah.Imports._
-// import com.mongodb.casbah.{MongoCollection, MongoClient}
-// import com.mongodb.casbah.commons.MongoDBObject
-// import org.bson.types.ObjectId
 
 /**
  * Created by Patrick Robinson on 02.05.15.
@@ -50,7 +47,7 @@ class DB(database : String) extends UntypedActor {
 				getCMD.t match {
 					case DBGetCMD.Type.AllPlansForUser => {
 						testplancoll
-							.filter("user" $eq getCMD.id) // TODO FIX
+							.find("user" $eq getCMD.id) // TODO FIX
 							.foreach(planDocument => {
 							getSender().tell(convertPlan(planDocument), getSelf())
 						})
