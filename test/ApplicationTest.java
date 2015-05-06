@@ -169,7 +169,14 @@ public class ApplicationTest {
         }
 
         // get raw
-        for(int i = 0; i < raws.size() * 20000; i++) {
+        runs.parallelStream().forEach(testrun1 -> {
+            DBGetCMD result = new DBGetCMD();
+            result.t = DBGetCMD.Type.RunRaws;
+            result.id = testrun1.id;
+            inbox.send(db_ref, result);
+        });
+        int totalrunraws = runs.parallelStream().map(testrun1 -> testrun1.testplan.parallelity * testrun1.testplan.numRuns).reduce(0, Integer::sum);
+        for(int i = 0; i < totalrunraws; i++) {
             LoadWorkerRaw tmp = (LoadWorkerRaw)inbox.receive(Duration.create(1, TimeUnit.MINUTES));
             assertThat(raws.get(tmp.testrun).contains(tmp));
         }
@@ -192,8 +199,23 @@ public class ApplicationTest {
         Collections.copy(copy, plans);
         copy.sort((t1, t2) -> t1.testId.compareTo(t2.testId));
         assertThat(testplanList).isEqualTo(copy);
+
         // get all run for plan
-        // TODO
+        List<Testrun> testrunList = new ArrayList<>(runs.size());
+        plans.parallelStream().forEach(testplan1 -> {
+            DBGetCMD dbGetCMD = new DBGetCMD();
+            dbGetCMD.id = testplan1.testId;
+            dbGetCMD.t = DBGetCMD.Type.AllRunsForPlan;
+            inbox.send(db_ref, dbGetCMD);
+        });
+        for(int i = 0; i < runs.size(); i++) {
+            testrunList.add((Testrun)inbox.receive(Duration.create(1, TimeUnit.MINUTES)));
+        }
+        testrunList.sort((t1, t2) -> t1.id.compareTo(t2.id));
+        List<Testrun> rcpy = new ArrayList<>(runs.size());
+        Collections.copy(runs, rcpy);
+        rcpy.sort((t1, t2) -> t1.id.compareTo(t2.id));
+        assertThat(testrunList).isEqualTo(rcpy);
 
 	    // delete
 	    runs.parallelStream().forEach(testrun -> {
