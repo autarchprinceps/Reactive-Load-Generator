@@ -48,11 +48,24 @@
             chart.append('g')
                 .attr('class', 'x axis')
                 .attr('transform', 'translate(0,' + height + ')')
-                .call(xAxis);
+                .call(xAxis)
+            .append("text")
+                .attr("class", "label")
+                .attr("x", width)
+                .attr("y", -6)
+                .style("text-anchor", "end")
+                .text('runtime [s]');
             chart.append('g')
                 .attr('class', 'y axis')
                 .attr('transform', 'translate(0,0)')
-                .call(yAxis);
+                .call(yAxis)
+            .append('text')
+                .attr('class', 'label')
+                .attr('transform', 'rotate(-90)')
+                .attr('y', 6)
+                .attr('dy', '.71em')
+                .style("text-anchor", 'end')
+                .text('delay [s]');
             
             function update(newMessage) {
                 data.push(newMessage);
@@ -70,7 +83,7 @@
                 
                 datapoints
                     .transition()
-                    .duration(400)
+                    .duration(1)
                     .attr('cx', function (d) {
                         return x(d.start);
                     })
@@ -81,7 +94,7 @@
                 
                 datapoints.enter().append('circle')
                     .transition()
-                    .duration(400)
+                    .duration(1)
                     .attr('cx', function (d) {
                         return x(d.start);
                     })
@@ -91,11 +104,11 @@
                     .attr('r', 25 * Math.log(maxx) / Math.sqrt(maxx));
                 chart.select('.x')
                     .transition()
-                    .duration(400)
+                    .duration(1)
                     .call(xAxis);
                 chart.select('.y')
                     .transition()
-                    .duration(400)
+                    .duration(1)
                     .call(yAxis);
             }
             
@@ -105,7 +118,7 @@
                 var s = Math.random() * 200 + 100 * i;
                 var e = s + Math.random() * 150 + 20 * i++;
                 update({start: s, end: e});
-            }, 500);
+            }, 10);
         </script>
     </body>
 </html>
