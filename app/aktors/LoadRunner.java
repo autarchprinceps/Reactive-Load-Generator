@@ -18,39 +18,34 @@ import java.util.List;
  * Created by Patrick Robinson on 22.04.15.
  */
 public class LoadRunner extends UntypedActor {
-	public LoadRunner(final ActorSystem as, ActorRef... parentSubscribers) {
+	public LoadRunner(ActorSystem as, Testplan testplan, ActorRef db, ActorRef... parentSubscribers) {
 		this.as = as;
-		db = as.actorOf(Props.create(DB.class));
 		subscribers = new ArrayList<>(parentSubscribers.length + 1);
 		subscribers.add(db);
 		for(ActorRef a : parentSubscribers) {
 			subscribers.add(a);
 		}
+
+        testrun = new Testrun();
+        testrun.id = new ObjectId();
+        testrun.testplan = testplan;
+        testrun.subscribers = subscribers;
+        db.tell(testrun, getSelf());
+
+        workers = new ArrayList<>(testrun.testplan.parallelity);
+        for(int i = 0; i < testrun.testplan.parallelity; i++) {
+            workers.add(as.actorOf(Props.create(LoadWorker.class)));
+        }
 	}
 
 	private final ActorSystem as;
-    private ActorRef db;
     private List<ActorRef> workers;
     private Testrun testrun;
 	private List<ActorRef> subscribers;
 
     @Override
     public void onReceive(Object message) {
-
-        if(message instanceof Testplan) {
-        	System.out.println("loadrunner received Testplan");
-            testrun = new Testrun();
-            testrun.id = new ObjectId();
-            testrun.testplan = (Testplan)message;
-            testrun.subscribers = subscribers;
-            db.tell(testrun, getSelf());
-
-            workers = new ArrayList<>(testrun.testplan.parallelity);
-            for(int i = 0; i < testrun.testplan.parallelity; i++) {
-                workers.add(as.actorOf(Props.create(LoadWorker.class)));
-                System.out.println("initialized new Worker");
-            }
-        } else if(message instanceof RunnerCMD) {
+        if(message instanceof RunnerCMD) {
             RunnerCMD cmd = (RunnerCMD)message;
             switch(cmd) {
                 case Start:
@@ -58,17 +53,16 @@ public class LoadRunner extends UntypedActor {
                     break;
                 case Stop:
                     workers.parallelStream().forEach((x) -> x.tell(WorkerCMD.Stop, getSelf()));
-                    db.tell("close", getSelf());
                     getContext().stop(getSelf());
                     break;
             }
+        } else {
+            unhandled(message);
         }
-
     }
 
     @Override
     public void postStop() throws Exception {
         workers.parallelStream().forEach((x) -> x.tell(WorkerCMD.Stop, getSelf()));
-        db.tell("close", getSelf());
     }
 }

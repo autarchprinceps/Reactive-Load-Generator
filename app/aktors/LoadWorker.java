@@ -72,12 +72,9 @@ public class LoadWorker extends UntypedActor {
                     	// TODO Auto-generated catch block
                     	e1.printStackTrace();
                     }
-
-                    
-                    
-                    
-                    System.out.println("Loadworker performing the actual test");
                     msg.end_(System.currentTimeMillis());
+	                System.out.println("Loadworker performing the actual test");
+
                     init.subscribers.parallelStream().forEach((actorRef -> actorRef.tell(msg, getSelf())));
                     if (plan.waitBetweenMsgs > 0) {
                         try {
@@ -87,6 +84,7 @@ public class LoadWorker extends UntypedActor {
                         }
                     }
                 }
+	            // TODO inform runner that finished?
             });
             t.start();
         } else if(message instanceof WorkerCMD) {

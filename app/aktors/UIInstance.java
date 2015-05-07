@@ -4,40 +4,54 @@ import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
-import aktors.messages.DBQuery;
-import aktors.messages.User;
-import org.bson.types.ObjectId;
+import aktors.messages.*;
+import helper.JSONHelper;
 import play.api.libs.json.JsObject;
-import play.api.libs.json.JsObject$;
-import play.api.libs.json.JsString$;
-import play.api.libs.json.JsValue;
-
-import scala.Tuple2;
-import scala.collection.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Created by Patrick Robinson on 07.05.2015.
  */
 public class UIInstance extends UntypedActor {
+	private class RunnerConnector extends UntypedActor {
+		public RunnerConnector(Testplan plan) {
+			this.testplan = plan;
+		}
+
+		private Testplan testplan;
+
+		@Override
+		public void onReceive(Object message) throws Exception {
+			if(message instanceof LoadWorkerRaw) {
+				websocket.tell(JSONHelper.objectResponse(
+					"raw"
+				,   ((LoadWorkerRaw)message).toJSON(false)
+				), getSelf());
+			} else {
+				unhandled(message);
+			}
+		}
+	}
 
 	public static Props props(ActorRef out) {
 		return Props.create(UIInstance.class, out);
 	}
 
-	private final ActorRef out;
+	private final ActorRef websocket;
 	private final ActorSystem as;
 	private final ActorRef db;
 
 	public UIInstance(ActorRef out) {
-		this.out = out;
+		this.websocket = out;
 		as = ActorSystem.create();
 		db = as.actorOf(Props.create(DB.class));
 	}
 
 	private User currentUser;
+	private List<ActorRef> running = new ArrayList<>();
 
 	@Override
 	public void onReceive(Object message) throws Exception {
@@ -55,15 +69,38 @@ public class UIInstance extends UntypedActor {
 					break;
 				case "logout":
 					currentUser = null; // TODO need to stop something else?
-					ArrayList<Tuple2<String, JsValue>> jsansj = new ArrayList<>();
-					jsansj.add(Tuple2.apply("type", JsString$.MODULE$.apply("login")));
-					jsansj.add(Tuple2.apply("describtion", JsString$.MODULE$.apply("Login successful")));
-					out.tell(new JsObject(JavaConversions.asScalaBuffer(jsansj)), getSelf());
+					websocket.tell(JSONHelper.simpleResponse("logout", "Logged out"), getSelf());
 					break;
-				case "plan":
-
+				case "store plan":
+					if(currentUser != null) {
+						db.tell(Testplan.fromJSON((JsObject)json.$bslash("testplan")), getSelf()); // TODO OK response necessary?
+					} else {
+						websocket.tell(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
+						throw new Exception("notauth");
+					}
 					break;
-				case "run":
+				case "start run":
+					if(currentUser != null) {
+						Testplan testplan = Testplan.fromJSON((JsObject)json.$bslash("testplan"));
+						ActorRef newRunner = as.actorOf(Props.create(
+							LoadRunner.class
+						,   as
+						,   testplan
+						,   db
+						,   as.actorOf(Props.create(RunnerConnector.class, testplan))
+						));
+						newRunner.tell(RunnerCMD.Start, getSelf()); // TODO seperate start necessary? depends on UI
+						running.add(newRunner);
+					} else {
+						websocket.tell(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
+						throw new Exception("notauth");
+					}
+					break;
+				case "load plan":
+					// TODO today
+					break;
+				case "load run":
+					// TODO today
 					break;
 				default:
 					throw new Exception("Wrong input to WebSocket");
@@ -74,16 +111,10 @@ public class UIInstance extends UntypedActor {
 				case Login:
 					if(queryResult.flag) {
 						currentUser = (User)queryResult.result;
-						ArrayList<Tuple2<String, JsValue>> jsansj = new ArrayList<>();
-						jsansj.add(Tuple2.apply("type", JsString$.MODULE$.apply("login")));
-						jsansj.add(Tuple2.apply("describtion", JsString$.MODULE$.apply("Login successful")));
-						out.tell(new JsObject(JavaConversions.asScalaBuffer(jsansj)), getSelf());
+						websocket.tell(JSONHelper.simpleResponse("login", "Login successful"), getSelf());
 					} else {
 						currentUser = null;
-						ArrayList<Tuple2<String, JsValue>> jsansj = new ArrayList<>();
-						jsansj.add(Tuple2.apply("type", JsString$.MODULE$.apply("error")));
-						jsansj.add(Tuple2.apply("describtion", JsString$.MODULE$.apply("Login failed")));
-						out.tell(new JsObject(JavaConversions.asScalaBuffer(jsansj)), getSelf());
+						websocket.tell(JSONHelper.simpleResponse("error", "Login failed"), getSelf());
 					}
 					break;
 			}
@@ -94,6 +125,6 @@ public class UIInstance extends UntypedActor {
 
 	@Override
 	public void postStop() throws Exception {
-
+		db.tell("close", getSelf());
 	}
 }

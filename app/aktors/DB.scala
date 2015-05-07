@@ -67,7 +67,15 @@ class DB(database : String) extends UntypedActor {
 			case query : DBQuery => {
 				query.t match {
 					case DBQuery.Type.Login => {
-						usercoll.find()
+						val result = usercoll.findOne(MongoDBObject("name" -> query.terms.get("name"))).get // TODO today
+						val user = new User(
+							result.getAs[ObjectId]("_id").get
+						,   result.getAs[String]("name").get
+						,   result.getAs[String]("password").get
+						)
+						query.flag = user.check(query.terms.get("password"))
+						if(query.flag) query.result = user
+						getSender.tell(query, getSelf)
 					}
 					case _ => return
 				}

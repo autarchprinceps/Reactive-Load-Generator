@@ -21,7 +21,7 @@ import play.mvc.*;
 public class Application extends Controller {
 
     public static Result index() {
-        return ok(index.render("hello"));
+        return ok(index.render("hello")); // TODO FIX something is wrong with play? index is not detected, throws error
     }
 
     public static Result startTest() throws MalformedURLException {
@@ -53,7 +53,7 @@ public class Application extends Controller {
         //let loadworker work
         loadworker.tell(myTestrun, ActorRef.noSender());
 
-    	return redirect(routes.Application.index());
+    	return redirect(routes.Application.index()); // TODO FIX something is wrong with play? routes is not detected, throws error
     }
 
     public static WebSocket<JsObject> socket() {
