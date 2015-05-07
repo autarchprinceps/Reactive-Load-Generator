@@ -28,9 +28,9 @@ class DB(database : String) extends UntypedActor {
 				val update = $push("runs" -> run)
 				testruncoll.update(query, update)
 			}
-			case trun : Testrun => testruncoll.insert(MongoDBObject("_id" -> trun.id, "testPlanId" -> trun.testplan.testId))
+			case trun : Testrun => testruncoll.insert(MongoDBObject("_id" -> trun.id, "testPlanId" -> trun.testplan.id))
 			case tplan : Testplan => testplancoll.insert(MongoDBObject(
-				"_id" -> tplan.testId
+				"_id" -> tplan.id
 			,	"numRuns" -> tplan.numRuns
 			,	"parallelity" -> tplan.parallelity
 			,	"path" -> tplan.path.toString()
@@ -58,14 +58,9 @@ class DB(database : String) extends UntypedActor {
 					case DBGetCMD.Type.RunRaws => {
 						val testrunobj = testruncoll.findOneByID(getCMD.id).get
 						val testrun = convertRun(testrunobj) // TODO expensive, can cut somehow?
-						testrunobj.getAs[MongoCollection]("runs").get.foreach(obj => { // TODO works?
-							val raw = new LoadWorkerRaw()
-							raw.testrun = testrun
-							raw.start = obj.getAs[Long]("start").get
-							raw.end = obj.getAs[Long]("end").get
-							raw.iterOnWorker = obj.getAs[Int]("iter").get
-							getSender().tell(raw, getSelf())
-						})
+						testrunobj.getAs[MongoCollection]("runs").get.foreach(obj => // TODO works?
+							getSender().tell(new LoadWorkerRaw(testrun, obj.getAs[Int]("iter").get, obj.getAs[Long]("start").get, obj.getAs[Long]("end").get), getSelf())
+						)
 					}
 				}
 			}
@@ -114,7 +109,7 @@ class DB(database : String) extends UntypedActor {
 			// TODO utilise currentuser, when account subsystem is implemented?
 			val planObject = new Testplan()
 			planObject.user = getUser(document.getAs[ObjectId]("user").get)
-			planObject.testId = document.getAs[ObjectId]("_id").get
+			planObject.id = document.getAs[ObjectId]("_id").get
 			planObject.waitBeforeStart = document.getAs[Int]("waitBeforeStart").get
 			planObject.waitBetweenMsgs = document.getAs[Int]("waitBetweenMsgs").get
 			planObject.parallelity = document.getAs[Int]("parallelity").get

@@ -4,17 +4,18 @@ import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
-import aktors.messages.DBGetCMD;
 import aktors.messages.DBQuery;
 import aktors.messages.User;
+import org.bson.types.ObjectId;
 import play.api.libs.json.JsObject;
+import play.api.libs.json.JsObject$;
+import play.api.libs.json.JsString$;
 import play.api.libs.json.JsValue;
 
 import scala.Tuple2;
-import scala.collection.Map;
-import scala.collection.Seq;
-import scala.collection.Seq$;
+import scala.collection.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
@@ -53,9 +54,14 @@ public class UIInstance extends UntypedActor {
 					db.tell(dbQuery, getSelf());
 					break;
 				case "logout":
-					currentUser = null;
+					currentUser = null; // TODO need to stop something else?
+					ArrayList<Tuple2<String, JsValue>> jsansj = new ArrayList<>();
+					jsansj.add(Tuple2.apply("type", JsString$.MODULE$.apply("login")));
+					jsansj.add(Tuple2.apply("describtion", JsString$.MODULE$.apply("Login successful")));
+					out.tell(new JsObject(JavaConversions.asScalaBuffer(jsansj)), getSelf());
 					break;
 				case "plan":
+
 					break;
 				case "run":
 					break;
@@ -67,11 +73,17 @@ public class UIInstance extends UntypedActor {
 			switch(queryResult.t) {
 				case Login:
 					if(queryResult.flag) {
-
+						currentUser = (User)queryResult.result;
+						ArrayList<Tuple2<String, JsValue>> jsansj = new ArrayList<>();
+						jsansj.add(Tuple2.apply("type", JsString$.MODULE$.apply("login")));
+						jsansj.add(Tuple2.apply("describtion", JsString$.MODULE$.apply("Login successful")));
+						out.tell(new JsObject(JavaConversions.asScalaBuffer(jsansj)), getSelf());
 					} else {
-						Seq<Tuple2<String, JsValue>> jsans = new Seq<>(){};
-						JsObject wsans = new JsObject(jsans);
-						out.tell();
+						currentUser = null;
+						ArrayList<Tuple2<String, JsValue>> jsansj = new ArrayList<>();
+						jsansj.add(Tuple2.apply("type", JsString$.MODULE$.apply("error")));
+						jsansj.add(Tuple2.apply("describtion", JsString$.MODULE$.apply("Login failed")));
+						out.tell(new JsObject(JavaConversions.asScalaBuffer(jsansj)), getSelf());
 					}
 					break;
 			}

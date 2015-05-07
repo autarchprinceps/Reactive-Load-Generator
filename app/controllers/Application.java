@@ -4,24 +4,19 @@ package controllers;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Inbox;
 import akka.actor.Props;
-import aktors.LoadRunner;
 import aktors.LoadWorker;
 import aktors.UIInstance;
 import aktors.messages.Testplan;
 import aktors.messages.Testrun;
 import aktors.messages.Testplan.ConnectionType;
 import org.bson.types.ObjectId;
-import play.*;
 import play.api.libs.json.JsObject;
-import play.data.Form;
 import play.mvc.*;
-import views.html.*;
 
 public class Application extends Controller {
 
@@ -42,7 +37,7 @@ public class Application extends Controller {
 
         //create test testplan and run
         Testplan myTestplan = new Testplan();
-        myTestplan.testId = new ObjectId();
+        myTestplan.id = new ObjectId();
         myTestplan.numRuns = 1; // Per Parallel Worker
         myTestplan.parallelity = 1;
         myTestplan.path = new URL("http://www.google.com");

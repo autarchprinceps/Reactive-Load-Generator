@@ -2,7 +2,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
@@ -10,18 +9,9 @@ import akka.actor.Inbox;
 import akka.actor.Props;
 import aktors.DB;
 import aktors.messages.*;
-import com.fasterxml.jackson.databind.JsonNode;
 import org.bson.types.ObjectId;
 import org.junit.*;
 
-import play.mvc.*;
-import play.test.*;
-import play.data.DynamicForm;
-import play.data.validation.ValidationError;
-import play.data.validation.Constraints.RequiredValidator;
-import play.i18n.Lang;
-import play.libs.F;
-import play.libs.F.*;
 import play.twirl.api.Content;
 import scala.concurrent.duration.Duration;
 
@@ -95,7 +85,7 @@ public class ApplicationTest {
 	        tmp.connectionType = Testplan.ConnectionType.values()[random.nextInt(Testplan.ConnectionType.values().length)];
 	        tmp.numRuns = random.nextInt(20000) + random.nextInt(20000) + random.nextInt(20000);
 	        tmp.parallelity = 1 + random.nextInt(1000);
-	        tmp.testId = new ObjectId();
+	        tmp.id = new ObjectId();
 	        tmp.waitBeforeStart = random.nextInt(10);
 	        tmp.waitBetweenMsgs = random.nextInt(10);
 	        try {
@@ -152,7 +142,7 @@ public class ApplicationTest {
         plans.parallelStream().map(testplan -> {
             DBGetCMD result = new DBGetCMD();
             result.t = DBGetCMD.Type.PlanByID;
-            result.id = testplan.testId;
+            result.id = testplan.id;
             return result;
         }).forEach(dbGetCMD -> inbox.send(db_ref, dbGetCMD));
 
@@ -200,17 +190,17 @@ public class ApplicationTest {
             Testplan tmp = (Testplan)inbox.receive(Duration.create(1, TimeUnit.MINUTES));
             testplanList.add(tmp);
         }
-        testplanList.sort((t1, t2) -> t1.testId.compareTo(t2.testId));
+        testplanList.sort((t1, t2) -> t1.id.compareTo(t2.id));
         List<Testplan> copy = new ArrayList<>(plans.size());
         Collections.copy(copy, plans);
-        copy.sort((t1, t2) -> t1.testId.compareTo(t2.testId));
+        copy.sort((t1, t2) -> t1.id.compareTo(t2.id));
         assertThat(testplanList).isEqualTo(copy);
 
         // get all run for plan
         List<Testrun> testrunList = new ArrayList<>(runs.size());
         plans.parallelStream().forEach(testplan1 -> {
             DBGetCMD dbGetCMD = new DBGetCMD();
-            dbGetCMD.id = testplan1.testId;
+            dbGetCMD.id = testplan1.id;
             dbGetCMD.t = DBGetCMD.Type.AllRunsForPlan;
             inbox.send(db_ref, dbGetCMD);
         });
@@ -233,7 +223,7 @@ public class ApplicationTest {
         plans.parallelStream().forEach(testplan -> {
             DBDelCMD delCMD = new DBDelCMD();
             delCMD.t = DBDelCMD.Type.Plan;
-            delCMD.id = testplan.testId;
+            delCMD.id = testplan.id;
             inbox.send(db_ref, delCMD);
         });
         users.parallelStream().forEach(user -> {

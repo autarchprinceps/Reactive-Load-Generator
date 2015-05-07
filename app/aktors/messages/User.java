@@ -1,6 +1,14 @@
 package aktors.messages;
 
 import org.bson.types.ObjectId;
+import play.api.libs.json.JsObject;
+import play.api.libs.json.JsString;
+import play.api.libs.json.JsString$;
+import play.api.libs.json.JsValue;
+import scala.Tuple2;
+import scala.collection.JavaConversions;
+
+import java.util.ArrayList;
 
 /**
  * Created by Patrick Robinson on 02.05.15.
@@ -32,5 +40,25 @@ public class User {
         this.id = id;
         this.name = name;
         this.password = password;
+    }
+
+    public static User fromJSON(JsObject user) {
+        return new User(
+            new ObjectId(user.$bslash("id").toString())
+        ,   user.$bslash("name").toString()
+        ,   user.$bslash("password") instanceof JsString ? user.$bslash("password").toString() : ""
+        );
+    }
+
+	public JsObject toJSON() {
+		return toJSON(false);
+	}
+
+    public JsObject toJSON(boolean withPw) {
+	    ArrayList<Tuple2<String, JsValue>> tuplesj = new ArrayList<>();
+	    tuplesj.add(Tuple2.apply("id", JsString$.MODULE$.apply(id.toString())));
+	    tuplesj.add(Tuple2.apply("name", JsString$.MODULE$.apply(name)));
+	    if(withPw) tuplesj.add(Tuple2.apply("password", JsString$.MODULE$.apply(password)));
+	    return new JsObject(JavaConversions.asScalaBuffer(tuplesj));
     }
 }
