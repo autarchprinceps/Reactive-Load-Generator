@@ -98,10 +98,15 @@ public class LoadWorker extends UntypedActor {
             WorkerCMD cmd = (WorkerCMD)message;
             if(cmd == WorkerCMD.Stop) {
                 t.stop();
-                getContext().stop(getSelf());
+                getContext().stop(getSelf()); // TODO works? else self().tell(PoisonPill.getInstance(), self());
             }
         } else {
             unhandled(message);
         }
+    }
+
+	@Override
+    public void postStop() throws Exception {
+	    t.stop();
     }
 }

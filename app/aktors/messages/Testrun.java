@@ -13,5 +13,5 @@ import java.util.List;
 public class Testrun {
     public ObjectId id;
     public Testplan testplan;
-    public List<ActorRef> subscribers = new ArrayList<>();
+    public List<ActorRef> subscribers;
 }

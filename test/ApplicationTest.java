@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Inbox;
+import akka.actor.Props;
 import aktors.DB;
 import aktors.messages.*;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -59,8 +60,7 @@ public class ApplicationTest {
         // assertThat(false);
         Random random = new Random();
         ActorSystem as = ActorSystem.create();
-        DB db = new DB("junit_loadgen"); // TODO bind to ActorSystem? or tell actorsystem to use non empty constructor
-        ActorRef db_ref = db.getSelf();
+        ActorRef db_ref = as.actorOf(Props.create(DB.class, "junit_loadgen"));
         Inbox inbox = Inbox.create(as);
 
         List<User> users = new ArrayList<>();
@@ -71,12 +71,18 @@ public class ApplicationTest {
         // insert users
         String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
         for(int i = 0; i < 200; i++) {
-            User tmp = new User();
-            tmp.id = new ObjectId();
-            tmp.name = "" + alphabet.charAt(i % alphabet.length());
+
+            String name = "" + alphabet.charAt(i % alphabet.length());
+            String password = "" + alphabet.charAt(i % alphabet.length());
             for(int j = 0; j < i / 10 + 5; j++) {
-                tmp.name += alphabet.charAt((i + j + random.nextInt(i)) % alphabet.length());
+                name += alphabet.charAt((i + j + random.nextInt(i)) % alphabet.length());
+                password += alphabet.charAt((i + j + random.nextInt(i)) % alphabet.length());
             }
+            User tmp = new User(
+                new ObjectId()
+            ,   name
+            ,   password
+            );
 	        inbox.send(db_ref, tmp);
 	        users.add(tmp);
         }
@@ -139,7 +145,7 @@ public class ApplicationTest {
 
         for(int i = 0; i < users.size(); i++) {
             User u = (User)inbox.receive(Duration.create(1, TimeUnit.MINUTES));
-            assertThat(users.parallelStream().filter(user -> user.id == u.id && user.name == u.name).count()).isEqualTo(1);
+            assertThat(users.parallelStream().filter(user -> user.id == u.id && user.name == u.name && u.check(user.getPassword())).count()).isEqualTo(1);
         }
 
         // get plans

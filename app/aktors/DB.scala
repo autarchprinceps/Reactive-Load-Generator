@@ -42,6 +42,7 @@ class DB(database : String) extends UntypedActor {
 			case user : User => usercoll.insert(MongoDBObject(
 				"_id" -> user.id
 			,	"name" -> user.name
+			,   "password" -> user.getPassword
 			))
 			case getCMD : DBGetCMD => {
 				getCMD.t match {
@@ -66,6 +67,14 @@ class DB(database : String) extends UntypedActor {
 							getSender().tell(raw, getSelf())
 						})
 					}
+				}
+			}
+			case query : DBQuery => {
+				query.t match {
+					case DBQuery.Type.Login => {
+						usercoll.find()
+					}
+					case _ => return
 				}
 			}
 			case del : DBDelCMD => {
@@ -93,10 +102,11 @@ class DB(database : String) extends UntypedActor {
 		def getUser(id : ObjectId) : User = {
 			// TODO cache?
 			val userDocument = usercoll.findOneByID(id).get
-			val userObject = new User()
-			userObject.id = id
-			userObject.name = userDocument.getAs[String]("name").get
-			return userObject
+			return new User(
+				id
+			,   userDocument.getAs[String]("name").get
+			,	userDocument.getAs[String]("password").get
+			)
 		}
 
 		def convertPlan(document : testplancoll.T) : Testplan = {

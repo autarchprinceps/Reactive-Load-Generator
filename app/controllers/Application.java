@@ -12,11 +12,13 @@ import akka.actor.Inbox;
 import akka.actor.Props;
 import aktors.LoadRunner;
 import aktors.LoadWorker;
+import aktors.UIInstance;
 import aktors.messages.Testplan;
 import aktors.messages.Testrun;
 import aktors.messages.Testplan.ConnectionType;
 import org.bson.types.ObjectId;
 import play.*;
+import play.api.libs.json.JsObject;
 import play.data.Form;
 import play.mvc.*;
 import views.html.*;
@@ -51,12 +53,16 @@ public class Application extends Controller {
         Testrun myTestrun = new Testrun();
         myTestrun.id = new ObjectId();
         myTestrun.testplan = myTestplan;
-        myTestrun.subscribers.add(loadworker);
+        myTestrun.subscribers = new ArrayList<>();
 
         //let loadworker work
         loadworker.tell(myTestrun, ActorRef.noSender());
 
     	return redirect(routes.Application.index());
+    }
+
+    public static WebSocket<JsObject> socket() {
+        return WebSocket.withActor(UIInstance::props);
     }
 
 }
