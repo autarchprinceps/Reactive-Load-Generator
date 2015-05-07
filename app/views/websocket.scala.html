@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <script src="http://code.jquery.com/jquery-2.1.4.min.js"/>
+</head>
+<body>
+    <input id="in" type="text"/><button id="in_act"/>
+    <div id="out"></div>
+    <script>
+        $(function() {
+            var ws = windows['MozWebSocket'] ? windows['MozWebSocket'] : WebSocket;
+            var socket = new ws('@routes.Application.socket().webSocketURL(request)');
+
+            socket.onmessage = function(event) {
+                $('#out').prepend('<p>' + event.data + '</p>');
+            }
+
+            $('#in_act').click(function(event) {
+                // TODO make JSON from #in
+            });
+        });
+    </script>
+</body>
+</html>
