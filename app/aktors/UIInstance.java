@@ -82,6 +82,16 @@ public class UIInstance extends UntypedActor {
 			JsObject json = (JsObject)message;
 			String type = json.$bslash("type").toString();
 			switch(type) {
+				case "register":
+					String name = json.$bslash("name").toString();
+					User user = new User(
+						new ObjectId()
+					,   name
+					,   json.$bslash("password").toString()
+					);
+					db.tell(user, getSelf());
+					websocket.tell(JSONHelper.simpleResponse("registered", "Registered " + name), getSelf());
+					break;
 				case "login":
 					DBQuery dbQuery = new DBQuery();
 					dbQuery.t = DBQuery.Type.Login;
