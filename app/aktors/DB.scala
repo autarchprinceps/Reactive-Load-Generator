@@ -39,7 +39,7 @@ class DB(database : String) extends UntypedActor {
 			,	"connectionType" -> tplan.connectionType.toString()
 			,	"user" -> tplan.user.id
 			))
-			case user : User => usercoll.insert(MongoDBObject(
+			case user : User => usercoll.insert(MongoDBObject( // TODO what if user exists already?
 				"_id" -> user.id
 			,	"name" -> user.name
 			,   "password" -> user.getPassword
