@@ -86,6 +86,12 @@ class DB(database : String) extends UntypedActor {
 					case DBDelCMD.Type.Plan => coll = testplancoll
 					case DBDelCMD.Type.Run => coll = testruncoll
 					case DBDelCMD.Type.User => coll = usercoll
+					case DBDelCMD.Type.DB => {
+						testruncoll.drop
+						testplancoll.drop
+						usercoll.drop
+						return
+					}
 					case _ => return
 				}
 				coll.findAndRemove(MongoDBObject("_id" -> del.id))

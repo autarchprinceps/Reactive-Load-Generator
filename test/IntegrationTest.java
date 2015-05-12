@@ -27,4 +27,10 @@ public class IntegrationTest {
         });
     }
 
+
+    @Test
+    public void testUIInstance() {
+        testUIInstance.apply();
+    }
+
 }

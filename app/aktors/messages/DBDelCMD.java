@@ -17,7 +17,7 @@ public class DBDelCMD {
     }
 
     public enum Type {
-        Plan, Run, User
+        Plan, Run, User, DB
     }
 
     public Type t;

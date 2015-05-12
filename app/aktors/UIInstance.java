@@ -59,19 +59,23 @@ public class UIInstance extends UntypedActor {
 		}
 	}
 
-	public static Props props(ActorRef out) {
-		return Props.create(UIInstance.class, out);
+	public static Props props(ActorRef out) { return props(out, false); }
+
+	public static Props props(ActorRef out, boolean testing) {
+		return Props.create(UIInstance.class, out, testing);
 	}
 
 	private final ActorRef websocket;
 	private final ActorSystem as;
 	private final ActorRef db;
 
-	public UIInstance(ActorRef out) {
+	public UIInstance(ActorRef out, boolean testing) {
 		this.websocket = out;
 		as = ActorSystem.create();
-		db = as.actorOf(Props.create(DB.class));
+		db = as.actorOf(Props.create(DB.class), testing ? "junit_loadgen" : "loadgen");
 	}
+
+
 
 	private User currentUser;
 	private List<ActorRef> running = new ArrayList<>();

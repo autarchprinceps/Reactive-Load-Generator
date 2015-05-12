@@ -8,6 +8,7 @@ import akka.actor.ActorSystem;
 import akka.actor.Inbox;
 import akka.actor.Props;
 import aktors.DB;
+import aktors.UIInstance;
 import aktors.messages.*;
 import org.bson.types.ObjectId;
 import org.junit.*;
