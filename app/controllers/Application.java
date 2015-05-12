@@ -17,11 +17,16 @@ import aktors.messages.Testplan.ConnectionType;
 import org.bson.types.ObjectId;
 import play.api.libs.json.JsObject;
 import play.mvc.*;
+import views.html.index;
 
 public class Application extends Controller {
 
     public static Result index() {
-        return ok(index.render("hello")); // TODO FIX something is wrong with play? index is not detected, throws error
+        return ok(index.render("hello"));
+    }
+
+    public static Results tws() {
+        return ok(tws.render("Testing Websocket")); // TODO FIX Why is tws template not found?
     }
 
     public static Result startTest() throws MalformedURLException {
@@ -53,7 +58,7 @@ public class Application extends Controller {
         //let loadworker work
         loadworker.tell(myTestrun, ActorRef.noSender());
 
-    	return redirect(routes.Application.index()); // TODO FIX something is wrong with play? routes is not detected, throws error
+    	return redirect(routes.Application.index());
     }
 
     public static WebSocket<JsObject> socket() {

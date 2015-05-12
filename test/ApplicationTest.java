@@ -113,11 +113,13 @@ public class ApplicationTest {
         runs.parallelStream().forEach(testrun -> {
             List<LoadWorkerRaw> tmps = new ArrayList<>();
             for (int i = 0; i < testrun.testplan.numRuns * testrun.testplan.parallelity; i++) {
-                LoadWorkerRaw tmp = new LoadWorkerRaw();
-                tmp.testrun = testrun;
-                tmp.start = random.nextInt(i);
-                tmp.end = tmp.start + random.nextInt(i / 2);
-                tmp.iterOnWorker = i / testrun.testplan.parallelity;
+                int rstart = random.nextInt(i);
+                LoadWorkerRaw tmp = new LoadWorkerRaw(
+                        testrun
+                    ,   i / testrun.testplan.parallelity
+                    ,   rstart
+                    ,   rstart + random.nextInt(i / 2)
+                );
 	            inbox.send(db_ref, tmp);
                 tmps.add(tmp);
             }
@@ -174,7 +176,7 @@ public class ApplicationTest {
         int totalrunraws = runs.parallelStream().map(testrun1 -> testrun1.testplan.parallelity * testrun1.testplan.numRuns).reduce(0, Integer::sum);
         for(int i = 0; i < totalrunraws; i++) {
             LoadWorkerRaw tmp = (LoadWorkerRaw)inbox.receive(Duration.create(1, TimeUnit.MINUTES));
-            assertThat(raws.get(tmp.testrun).contains(tmp));
+            assertThat(raws.get(tmp.testrun()).contains(tmp));
         }
 
 	    // get all plans for user

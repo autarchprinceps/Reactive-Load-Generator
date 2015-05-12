@@ -5,6 +5,8 @@
 # Home page
 GET     /                           controllers.Application.index()
 
+GET		/							controllers.Application.tws()
+
 POST    /test                       controllers.Application.startTest()
 
 GET     /socket                     controllers.Application.socket()
