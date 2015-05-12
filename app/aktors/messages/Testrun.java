@@ -38,4 +38,16 @@ public class Testrun {
 		if(withPlan) tuplesj.add(Tuple2.apply("testplan", testplan.toJSON()));
 		return new JsObject(JavaConversions.asScalaBuffer(tuplesj));
 	}
+
+	@Override
+	public int hashCode() {
+		return id.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+        return
+            ((obj instanceof Testrun) && ((Testrun)obj).id.equals(id))
+        ||  ((obj instanceof JsObject) && new ObjectId(((JsObject)obj).$bslash("id").toString()).equals(id));
+	}
 }

@@ -12,9 +12,20 @@ import java.util.ArrayList;
 
 /**
  * Created by Patrick Robinson on 02.05.15.
- * TODO basically no security?!
  */
 public class User {
+    @Override
+    public int hashCode() {
+        return id.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return
+            ((obj instanceof User) && ((User)obj).id.equals(id))
+        ||  ((obj instanceof JsObject) && new ObjectId(((JsObject)obj).$bslash("id").toString()).equals(id));
+    }
+
     public ObjectId id;
     public String name;
     private String password;

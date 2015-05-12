@@ -60,4 +60,21 @@ class LoadWorkerRaw(run: Testrun, iter : Int, startTime : Long, endTime : Long) 
 	,   ("end", JsNumber(_end))
 	,   ("testrun", if(fullTestrun) testrun.toJSON else JsString(_testrun.id.toString))
 	))
+
+	def canEqual(other: Any): Boolean = other.isInstanceOf[LoadWorkerRaw]
+
+	override def equals(other: Any): Boolean = other match {
+		case that: LoadWorkerRaw =>
+			(that canEqual this) &&
+				_testrun == that.testrun &&
+				_iterOnWorker == that.iterOnWorker &&
+				_start == that.start &&
+				_end == that.end
+		case _ => false
+	}
+
+	override def hashCode(): Int = {
+		val state = Seq(_testrun, _iterOnWorker, _start, _end)
+		state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+	}
 }

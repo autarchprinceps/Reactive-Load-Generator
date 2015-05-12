@@ -14,6 +14,18 @@ import java.util.ArrayList;
  * Created by Patrick Robinson on 20.04.15.
  */
 public class Testplan {
+	@Override
+	public int hashCode() {
+		return id.hashCode();
+	}
+
+    @Override
+    public boolean equals(Object obj) {
+        return
+            ((obj instanceof Testplan) && ((Testplan)obj).id.equals(id))
+        ||  ((obj instanceof JsObject) && new ObjectId(((JsObject)obj).$bslash("id").toString()).equals(id));
+    }
+
     public enum ConnectionType {
         HTTP, TCP, UDP, WebSocket
     }
