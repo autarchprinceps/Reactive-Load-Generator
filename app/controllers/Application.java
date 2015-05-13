@@ -18,6 +18,7 @@ import org.bson.types.ObjectId;
 import play.api.libs.json.JsObject;
 import play.mvc.*;
 import views.html.index;
+import views.html.tws;
 
 public class Application extends Controller {
 
@@ -25,7 +26,7 @@ public class Application extends Controller {
         return ok(index.render("hello"));
     }
 
-    public static Results tws() {
+    public static Result tws() {
         return ok(tws.render("Testing Websocket")); // TODO FIX Why is tws template not found?
     }
 
@@ -34,7 +35,7 @@ public class Application extends Controller {
 
 
     	//initialize first Test directly on a loadworker
-        final ActorSystem system = ActorSystem.create("Loadgenerator");
+        final ActorSystem system = ActorSystem.create("loadgenerator");
         final ActorRef loadworker = system.actorOf(Props.create(LoadWorker.class), "loadworker");
 
         // Create the "actor-in-a-box" (not needed now)
@@ -53,7 +54,7 @@ public class Application extends Controller {
         Testrun myTestrun = new Testrun();
         myTestrun.id = new ObjectId();
         myTestrun.testplan = myTestplan;
-        myTestrun.subscribers = new ArrayList<>();
+        myTestrun.subscribers = new ArrayList<ActorRef>();
 
         //let loadworker work
         loadworker.tell(myTestrun, ActorRef.noSender());
@@ -61,7 +62,7 @@ public class Application extends Controller {
     	return redirect(routes.Application.index());
     }
 
-    public static WebSocket<JsObject> socket() {
+    public static WebSocket<String> socket() {
         return WebSocket.withActor(UIInstance::props);
     }
 
