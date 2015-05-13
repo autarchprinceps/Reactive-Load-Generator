@@ -41,7 +41,11 @@ public class Testplan {
 
     public static Testplan fromJSON(JsObject plan) throws MalformedURLException {
         Testplan result = new Testplan();
-        result.id = new ObjectId(plan.$bslash("id").toString());
+	    if(plan.$bslash("id") instanceof JsString) {
+		    result.id = new ObjectId(plan.$bslash("id").toString());
+	    } else {
+		    result.id = new ObjectId();
+	    }
 	    if(plan.$bslash("user") instanceof JsObject) {
 		    result.user = User.fromJSON((JsObject)plan.$bslash("user"));
 	    }

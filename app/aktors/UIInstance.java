@@ -31,6 +31,11 @@ public class UIInstance extends UntypedActor {
 					"raw"
 				,   ((LoadWorkerRaw)message).toJSON(false)
 				), getSelf());
+			} else if(message instanceof Testrun) {
+				websocket.tell(JSONHelper.objectResponse(
+					"runstart"
+				,   ((Testrun)message).toJSON(true)
+				), getSelf());
 			} else {
 				unhandled(message);
 			}
@@ -106,11 +111,14 @@ public class UIInstance extends UntypedActor {
 					break;
 				case "logout":
 					currentUser = null; // TODO need to stop something else?
+					// TODO disconnect running TestRuns from socket
 					websocket.tell(JSONHelper.simpleResponse("logout", "Logged out"), getSelf());
 					break;
 				case "store plan":
 					if (currentUser != null) {
-						db.tell(Testplan.fromJSON((JsObject) json.$bslash("testplan")), getSelf()); // TODO OK response necessary?
+						Testplan tp = Testplan.fromJSON((JsObject)json.$bslash("testplan"));
+						tp.user = currentUser;
+						db.tell(tp, getSelf()); // TODO OK response necessary?
 					} else {
 						websocket.tell(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
 						throw new Exception("notauth");
@@ -119,12 +127,13 @@ public class UIInstance extends UntypedActor {
 				case "start run":
 					if (currentUser != null) {
 						Testplan testplan = Testplan.fromJSON((JsObject) json.$bslash("testplan"));
+						testplan.user = currentUser;
 						ActorRef newRunner = as.actorOf(Props.create(
 							LoadRunner.class
-							, as
-							, testplan
-							, db
-							, as.actorOf(Props.create(RunnerConnector.class, testplan))
+						,   as
+						,   testplan
+						,   db
+						,   as.actorOf(Props.create(RunnerConnector.class, testplan))
 						));
 						newRunner.tell(RunnerCMD.Start, getSelf()); // TODO seperate start necessary? depends on UI
 						running.add(newRunner);
@@ -138,6 +147,7 @@ public class UIInstance extends UntypedActor {
 						DBGetCMD dbGetCMD2 = new DBGetCMD();
 						dbGetCMD2.t = DBGetCMD.Type.AllPlansForUser;
 						dbGetCMD2.id = currentUser.id;
+						db.tell(dbGetCMD2, getSelf());
 					} else {
 						websocket.tell(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
 						throw new Exception("notauth");

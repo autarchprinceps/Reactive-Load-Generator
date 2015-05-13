@@ -31,6 +31,9 @@ public class LoadRunner extends UntypedActor {
         testrun.testplan = testplan;
         testrun.subscribers = subscribers;
         db.tell(testrun, getSelf());
+		for(ActorRef parentSubscriber : parentSubscribers) {
+			parentSubscriber.tell(testrun, getSelf());
+		}
 
         workers = new ArrayList<>(testrun.testplan.parallelity);
         for(int i = 0; i < testrun.testplan.parallelity; i++) {
