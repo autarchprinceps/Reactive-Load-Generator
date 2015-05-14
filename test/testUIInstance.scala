@@ -19,7 +19,7 @@ import scala.util.Random
 object testUIInstance {
 	val as = ActorSystem.create
 	val inbox = Inbox.create(as)
-	val uii = as.actorOf(Props.create(classOf[UIInstance], inbox.getRef, true))
+	val uii = as.actorOf(Props.create(classOf[UIInstance], inbox.getRef, true.asInstanceOf[AnyRef]))
 	val db = as.actorOf(Props(classOf[DB]), "junit_loadgen")
 	val random = new Random
 
