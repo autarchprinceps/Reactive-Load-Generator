@@ -5,7 +5,7 @@
 # Home page
 GET     /                           controllers.Application.index()
 
-GET		/							controllers.Application.tws()
+GET		/tws						controllers.Application.tws()
 
 POST    /test                       controllers.Application.startTest()
 
