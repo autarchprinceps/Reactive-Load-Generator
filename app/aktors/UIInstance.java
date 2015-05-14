@@ -128,12 +128,11 @@ public class UIInstance extends UntypedActor {
 						db.tell(tp, getSelf()); // TODO OK response necessary?
 					} else {
 						ws(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
-						throw new Exception("notauth");
 					}
 					break;
 				case "start run":
 					if (currentUser != null) {
-						Testplan testplan = Testplan.fromJSON((JsObject)json.$bslash("testplan"));
+						Testplan testplan = Testplan.fromJSON((JsObject)json.$bslash("testplan")); // TODO replace by DB lookup
 						testplan.user = currentUser;
 						ActorRef newRunner = as.actorOf(Props.create(
 							LoadRunner.class
@@ -146,7 +145,6 @@ public class UIInstance extends UntypedActor {
 						running.add(newRunner);
 					} else {
 						ws(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
-						throw new Exception("notauth");
 					}
 					break;
 				case "all plans":
@@ -157,10 +155,9 @@ public class UIInstance extends UntypedActor {
 						db.tell(dbGetCMD2, getSelf());
 					} else {
 						ws(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
-						throw new Exception("notauth");
 					}
 					break;
-				case "load plan":
+				case "load plan": // TODO does not seem to work
 					if(currentUser != null) {
 						DBGetCMD dbGetCMD = new DBGetCMD();
 						dbGetCMD.t = DBGetCMD.Type.PlanByID;
@@ -170,7 +167,6 @@ public class UIInstance extends UntypedActor {
 						db.tell(dbGetCMD, getSelf());
 					} else {
 						ws(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
-						throw new Exception("notauth");
 					}
 					break;
 				case "load run":
@@ -181,7 +177,6 @@ public class UIInstance extends UntypedActor {
 						db.tell(dbGetCMD1, as.actorOf(Props.create(RunLoader.class)));
 					} else {
 						ws(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
-						throw new Exception("notauth");
 					}
 					break;
 				default:
@@ -194,14 +189,12 @@ public class UIInstance extends UntypedActor {
 				ws(JSONHelper.objectResponse("testrun", ((Testrun) message).toJSON()), getSelf());
 			} else {
 				ws(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
-				throw new Exception("notauth");
 			}
 		} else if(message instanceof Testplan) {
 			if(currentUser != null) {
 				ws(JSONHelper.objectResponse("testplan", ((Testplan) message).toJSON()), getSelf());
 			} else {
 				ws(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
-				throw new Exception("notauth");
 			}
 		} else if(message instanceof DBQuery) {
 			DBQuery queryResult = (DBQuery)message;

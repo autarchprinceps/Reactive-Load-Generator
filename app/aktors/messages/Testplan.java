@@ -50,12 +50,18 @@ public class Testplan {
 	    if(plan.$bslash("user") instanceof JsObject) {
 		    result.user = User.fromJSON((JsObject)plan.$bslash("user"));
 	    }
-	    result.path = new URL(JSONHelper.JsStringToString(plan.$bslash("path")));
+	    result.path = new URL(JSONHelper.JsStringToString(plan.$bslash("path"))); // TODO make more flexible (protocol required)
 		result.connectionType = ConnectionType.valueOf(JSONHelper.JsStringToString(plan.$bslash("connectionType")));
 	    result.numRuns = ((JsNumber)plan.$bslash("numRuns")).value().intValue();
 	    result.parallelity = ((JsNumber)plan.$bslash("parallelity")).value().intValue();
-	    result.waitBetweenMsgs = ((JsNumber)plan.$bslash("waitBetweenMsgs")).value().intValue();
-	    result.waitBeforeStart = ((JsNumber)plan.$bslash("waitBeforeStart")).value().intValue();
+	    result.waitBetweenMsgs =
+		    plan.$bslash("waitBetweenMsgs") instanceof JsNumber
+			?   ((JsNumber)plan.$bslash("waitBetweenMsgs")).value().intValue()
+	        :   0;
+	    result.waitBeforeStart =
+		    plan.$bslash("waitBeforeStart") instanceof JsNumber
+	        ?   ((JsNumber)plan.$bslash("waitBeforeStart")).value().intValue()
+		    :   0;
 	    return result;
     }
 
