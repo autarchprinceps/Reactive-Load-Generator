@@ -49,10 +49,10 @@ object testUIInstance {
 
 	def testRegLogin = {
 		val alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-		for(i <- 0 to 200) {
+		for(i <- 0 until 200) {
 			var name = "" + alphabet.charAt(i % alphabet.length)
 			var password = "" + alphabet.charAt(i % alphabet.length)
-			for(j <- 0 to i / 10 + 5) {
+			for(j <- 0 until i / 10 + 5) {
 				name += alphabet.charAt((i + j + random.nextInt(i)) % alphabet.length)
 				password += alphabet.charAt((i + j + random.nextInt(i)) % alphabet.length)
 			}
@@ -123,12 +123,12 @@ object testUIInstance {
 	val testruns = new mutable.HashMap[Testplan, ArrayBuffer[Testrun]]()
 
 	def testRun = {
-		for(i <- 0 until 10000) {
+		for(i <- 0 until (testplans length)) {
 			val numTR = 1 + random.nextInt(10)
 			val tmpabuf = new ArrayBuffer[Testrun](numTR)
 			val tmptp = testplans(i)
 			testruns put(tmptp, tmpabuf)
-			for(j <- 0 to numTR) {
+			for(j <- 0 until numTR) {
 				ws(List(
 					("type", JsString("start run"))
 				,	("testplan", tmptp.toJSON(false))
@@ -138,7 +138,7 @@ object testUIInstance {
 				val tmprun = Testrun.fromJSON(tmpget.\("content").asInstanceOf[JsObject])
 				assertThat(tmprun.testplan.equals(tmptp))
 				tmpabuf += tmprun
-				for(k <- 1 to tmptp.numRuns * tmptp.parallelity) {
+				for(k <- 0 until tmptp.numRuns * tmptp.parallelity) {
 					assertThat(get.\("type").toString()).isEqualTo("raw")
 				}
 			}
@@ -146,11 +146,41 @@ object testUIInstance {
 	}
 
 	def testLoadPlan = {
-
+		for(i <- 0 until (testplans length)) {
+			val tmptp = testplans(i)
+			ws(List(
+				("type", JsString("load plan"))
+			,	("id", JsString(tmptp.id.toString))
+			))
+			for(j <- 0 until (testruns(tmptp) length) + 1) {
+				var response = get
+				assertThat(
+				(	get.\("type").toString().equals("testplan")
+				&&	Testplan.fromJSON(get.\("content").asInstanceOf[JsObject]).equals(tmptp))
+				||	(get.\("type").toString().equals("testrun")
+				&&	(testruns(tmptp) contains Testrun.fromJSON(get.\("content").asInstanceOf[JsObject])))
+				)
+			}
+		}
 	}
 
 	def testLoadRun = {
-
+		for(i <- 0 until (testplans length)) {
+			val tmptp = testplans(i)
+			val tmptrs = testruns(tmptp)
+			for(j <- 0 until (tmptrs length)) {
+				ws(List(
+					("type", JsString("load run"))
+				,	("id", JsString(tmptrs(j).id.toString))
+				))
+				val recrun = get
+				assertThat(recrun.\("type").toString()).isEqualTo("testrun")
+				Testrun.fromJSON(recrun.\("content").asInstanceOf[JsObject]).equals(tmptrs(j))
+				for(k <- 0 until tmptp.parallelity * tmptp.numRuns) {
+					assertThat(get.\("type").toString()).isEqualTo("raw")
+				}
+			}
+		}
 	}
 
 	def drop = {
