@@ -16,6 +16,10 @@ import aktors.messages.Testrun;
 import aktors.messages.Testplan.ConnectionType;
 import org.bson.types.ObjectId;
 import play.api.libs.json.JsObject;
+import play.api.libs.json.JsString;
+import play.api.libs.json.JsValue;
+import play.api.libs.json.Json;
+import play.libs.F;
 import play.mvc.*;
 import views.html.index;
 import views.html.tws;
@@ -23,15 +27,17 @@ import views.html.tws;
 public class Application extends Controller {
 
     public static Result index() {
-        return ok(index.render("hello"));
+	    System.out.println("DEBUG: index render start");
+	    return ok(index.render("hello"));
     }
 
     public static Result tws() {
+	    System.out.println("DEBUG: tws render start");
         return ok(tws.render("Testing Websocket")); // TODO FIX Why is tws template not found?
     }
 
     public static Result startTest() throws MalformedURLException {
-
+	    System.out.println("DEBUG: startTest start");
 
 
     	//initialize first Test directly on a loadworker
@@ -63,7 +69,16 @@ public class Application extends Controller {
     }
 
     public static WebSocket<String> socket() {
+        System.out.println("DEBUG: socket open start");
         return WebSocket.withActor(UIInstance::props);
     }
 
+	public static WebSocket<String> echo() {
+		System.out.println("DEBUG: echo open start");
+		return WebSocket.whenReady((in, out) -> {
+			System.out.println("DEBUG: echo opened");
+			in.onMessage(out::write);
+			out.write("Hallo");
+		});
+	}
 }

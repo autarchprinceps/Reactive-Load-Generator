@@ -1,6 +1,6 @@
 package helper
 
-import play.api.libs.json.{JsString, JsObject}
+import play.api.libs.json.{JsValue, JsString, JsObject}
 
 /**
  * Created by Patrick Robinson on 07.05.2015.
@@ -15,4 +15,9 @@ object JSONHelper {
 		("type", JsString(typ))
 	,   ("content", obj)
 	))
+
+	def JsStringToString(jsString: JsValue) : String = {
+		val tmp = jsString.toString()
+		return tmp.substring(1, tmp.length - 1)
+	}
 }

@@ -1,6 +1,7 @@
 package aktors.messages;
 
 import akka.actor.ActorRef;
+import helper.JSONHelper;
 import org.bson.types.ObjectId;
 import play.api.libs.json.JsObject;
 import play.api.libs.json.JsString$;
@@ -23,7 +24,7 @@ public class Testrun {
 
     public static Testrun fromJSON(JsObject run) throws MalformedURLException {
         Testrun result = new Testrun();
-        result.id = new ObjectId(run.$bslash("id").toString());
+        result.id = new ObjectId(JSONHelper.JsStringToString(run.$bslash("id")));
 	    if(run.$bslash("testplan") instanceof JsObject) result.testplan = Testplan.fromJSON((JsObject)run.$bslash("testplan"));
         return result;
     }

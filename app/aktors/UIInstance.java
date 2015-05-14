@@ -8,6 +8,8 @@ import aktors.messages.*;
 import helper.JSONHelper;
 import org.bson.types.ObjectId;
 import play.api.libs.json.JsObject;
+import play.api.libs.json.JsString;
+import play.api.libs.json.Json;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -80,6 +82,10 @@ public class UIInstance extends UntypedActor {
 		db = as.actorOf(Props.create(DB.class), testing ? "junit_loadgen" : "loadgen");
 	}
 
+	private void ws(JsObject message, ActorRef sender) {
+		websocket.tell(message.toString(), sender);
+	}
+
 
 
 	private User currentUser;
@@ -87,32 +93,33 @@ public class UIInstance extends UntypedActor {
 
 	@Override
 	public void onReceive(Object message) throws Exception {
-		if(message instanceof JsObject) {
-			JsObject json = (JsObject)message;
-			String type = json.$bslash("type").toString();
+		System.out.println(message);
+		if(message instanceof String) {
+			JsObject json = ((JsObject)Json.parse((String) message));
+			String type = JSONHelper.JsStringToString(json.$bslash("type"));
 			switch(type) {
 				case "register":
-					String name = json.$bslash("name").toString();
+					String name = JSONHelper.JsStringToString(json.$bslash("name"));
 					User user = new User(
 						new ObjectId()
 					,   name
-					,   json.$bslash("password").toString()
+					,   JSONHelper.JsStringToString(json.$bslash("password"))
 					);
 					db.tell(user, getSelf());
-					websocket.tell(JSONHelper.simpleResponse("registered", "Registered " + name), getSelf());
+					ws(JSONHelper.simpleResponse("registered", "Registered " + name), getSelf());
 					break;
 				case "login":
 					DBQuery dbQuery = new DBQuery();
 					dbQuery.t = DBQuery.Type.Login;
 					dbQuery.terms = new HashMap<>();
-					dbQuery.terms.put("name", json.$bslash("name").toString());
-					dbQuery.terms.put("password", json.$bslash("password").toString());
+					dbQuery.terms.put("name", JSONHelper.JsStringToString(json.$bslash("name")));
+					dbQuery.terms.put("password", JSONHelper.JsStringToString(json.$bslash("password")));
 					db.tell(dbQuery, getSelf());
 					break;
 				case "logout":
 					currentUser = null; // TODO need to stop something else?
 					// TODO disconnect running TestRuns from socket
-					websocket.tell(JSONHelper.simpleResponse("logout", "Logged out"), getSelf());
+					ws(JSONHelper.simpleResponse("logout", "Logged out"), getSelf());
 					break;
 				case "store plan":
 					if (currentUser != null) {
@@ -120,13 +127,13 @@ public class UIInstance extends UntypedActor {
 						tp.user = currentUser;
 						db.tell(tp, getSelf()); // TODO OK response necessary?
 					} else {
-						websocket.tell(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
+						ws(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
 						throw new Exception("notauth");
 					}
 					break;
 				case "start run":
 					if (currentUser != null) {
-						Testplan testplan = Testplan.fromJSON((JsObject) json.$bslash("testplan"));
+						Testplan testplan = Testplan.fromJSON((JsObject)json.$bslash("testplan"));
 						testplan.user = currentUser;
 						ActorRef newRunner = as.actorOf(Props.create(
 							LoadRunner.class
@@ -138,7 +145,7 @@ public class UIInstance extends UntypedActor {
 						newRunner.tell(RunnerCMD.Start, getSelf()); // TODO seperate start necessary? depends on UI
 						running.add(newRunner);
 					} else {
-						websocket.tell(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
+						ws(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
 						throw new Exception("notauth");
 					}
 					break;
@@ -149,7 +156,7 @@ public class UIInstance extends UntypedActor {
 						dbGetCMD2.id = currentUser.id;
 						db.tell(dbGetCMD2, getSelf());
 					} else {
-						websocket.tell(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
+						ws(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
 						throw new Exception("notauth");
 					}
 					break;
@@ -157,12 +164,12 @@ public class UIInstance extends UntypedActor {
 					if(currentUser != null) {
 						DBGetCMD dbGetCMD = new DBGetCMD();
 						dbGetCMD.t = DBGetCMD.Type.PlanByID;
-						dbGetCMD.id = new ObjectId(json.$bslash("id").toString());
+						dbGetCMD.id = new ObjectId(JSONHelper.JsStringToString(json.$bslash("id")));
 						db.tell(dbGetCMD, getSelf());
 						dbGetCMD.t = DBGetCMD.Type.AllRunsForPlan;
 						db.tell(dbGetCMD, getSelf());
 					} else {
-						websocket.tell(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
+						ws(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
 						throw new Exception("notauth");
 					}
 					break;
@@ -170,28 +177,30 @@ public class UIInstance extends UntypedActor {
 					if(currentUser != null) {
 						DBGetCMD dbGetCMD1 = new DBGetCMD();
 						dbGetCMD1.t = DBGetCMD.Type.RunByID;
-						dbGetCMD1.id = new ObjectId(json.$bslash("id").toString());
+						dbGetCMD1.id = new ObjectId(JSONHelper.JsStringToString(json.$bslash("id")));
 						db.tell(dbGetCMD1, as.actorOf(Props.create(RunLoader.class)));
 					} else {
-						websocket.tell(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
+						ws(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
 						throw new Exception("notauth");
 					}
 					break;
 				default:
-					throw new Exception("Wrong input to WebSocket");
+					websocket.tell("Wrong type: " + type, getSelf());
+					websocket.tell(json.fields().toString(), getSelf());
+					// throw new Exception("Wrong input to WebSocket");
 			}
 		} else if(message instanceof Testrun) {
 			if(currentUser != null) {
-				websocket.tell(JSONHelper.objectResponse("testrun", ((Testrun) message).toJSON()), getSelf());
+				ws(JSONHelper.objectResponse("testrun", ((Testrun) message).toJSON()), getSelf());
 			} else {
-				websocket.tell(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
+				ws(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
 				throw new Exception("notauth");
 			}
 		} else if(message instanceof Testplan) {
 			if(currentUser != null) {
-				websocket.tell(JSONHelper.objectResponse("testplan", ((Testplan) message).toJSON()), getSelf());
+				ws(JSONHelper.objectResponse("testplan", ((Testplan) message).toJSON()), getSelf());
 			} else {
-				websocket.tell(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
+				ws(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
 				throw new Exception("notauth");
 			}
 		} else if(message instanceof DBQuery) {
@@ -200,10 +209,10 @@ public class UIInstance extends UntypedActor {
 				case Login:
 					if(queryResult.flag) {
 						currentUser = (User)queryResult.result;
-						websocket.tell(JSONHelper.simpleResponse("login", "Login successful"), getSelf());
+						ws(JSONHelper.simpleResponse("login", "Login successful"), getSelf());
 					} else {
 						currentUser = null;
-						websocket.tell(JSONHelper.simpleResponse("error", "Login failed"), getSelf());
+						ws(JSONHelper.simpleResponse("error", "Login failed"), getSelf());
 					}
 					break;
 			}

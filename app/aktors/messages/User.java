@@ -1,5 +1,6 @@
 package aktors.messages;
 
+import helper.JSONHelper;
 import org.bson.types.ObjectId;
 import play.api.libs.json.JsObject;
 import play.api.libs.json.JsString;
@@ -23,7 +24,7 @@ public class User {
     public boolean equals(Object obj) {
         return
             ((obj instanceof User) && ((User)obj).id.equals(id))
-        ||  ((obj instanceof JsObject) && new ObjectId(((JsObject)obj).$bslash("id").toString()).equals(id));
+        ||  ((obj instanceof JsObject) && new ObjectId(JSONHelper.JsStringToString(((JsObject) obj).$bslash("id"))).equals(id));
     }
 
     public ObjectId id;
@@ -57,7 +58,7 @@ public class User {
         return new User(
             new ObjectId(user.$bslash("id").toString())
         ,   user.$bslash("name").toString()
-        ,   user.$bslash("password") instanceof JsString ? user.$bslash("password").toString() : ""
+        ,   user.$bslash("password") instanceof JsString ? JSONHelper.JsStringToString(user.$bslash("password")) : ""
         );
     }
 

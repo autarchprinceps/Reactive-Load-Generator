@@ -1,6 +1,6 @@
 package aktors.messages
 
-import play.api.libs.json.{JsString, JsNumber, JsObject, JsValue}
+import play.api.libs.json._
 import scala.Tuple2
 import scala.collection.JavaConversions
 import java.net.MalformedURLException
@@ -54,19 +54,19 @@ class LoadWorkerRaw(run: Testrun, iter : Int, startTime : Long, endTime : Long) 
 
 	// def this() = this(null, 0, 0, 0)
 
-	def toJSON(fullTestrun: Boolean = false): JsObject = new JsObject(List(
-		("iterOnWorker", JsNumber(_iterOnWorker))
-	,   ("start", JsNumber(_start))
-	,   ("end", JsNumber(_end))
-	,   ("testrun", if(fullTestrun) testrun.toJSON else JsString(_testrun.id.toString))
-	))
+	def toJSON(fullTestrun: Boolean = false): JsObject = Json.obj(
+		"iterOnWorker" -> JsNumber(_iterOnWorker)
+	,	"start" -> JsNumber(_start)
+	,	"end" -> JsNumber(_end)
+	,	"testrun" -> (if(fullTestrun) testrun.toJSON else JsString(_testrun.id.toString))
+	)
 
 	def canEqual(other: Any): Boolean = other.isInstanceOf[LoadWorkerRaw]
 
 	override def equals(other: Any): Boolean = other match {
 		case that: LoadWorkerRaw =>
 			(that canEqual this) &&
-				_testrun == that.testrun &&
+				_testrun.equals(that.testrun) &&
 				_iterOnWorker == that.iterOnWorker &&
 				_start == that.start &&
 				_end == that.end

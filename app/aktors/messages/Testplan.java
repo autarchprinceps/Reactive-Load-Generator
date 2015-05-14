@@ -1,5 +1,6 @@
 package aktors.messages;
 
+import helper.JSONHelper;
 import org.bson.types.ObjectId;
 import play.api.libs.json.*;
 import scala.Tuple2;
@@ -42,15 +43,15 @@ public class Testplan {
     public static Testplan fromJSON(JsObject plan) throws MalformedURLException {
         Testplan result = new Testplan();
 	    if(plan.$bslash("id") instanceof JsString) {
-		    result.id = new ObjectId(plan.$bslash("id").toString());
+		    result.id = new ObjectId(JSONHelper.JsStringToString(plan.$bslash("id")));
 	    } else {
 		    result.id = new ObjectId();
 	    }
 	    if(plan.$bslash("user") instanceof JsObject) {
 		    result.user = User.fromJSON((JsObject)plan.$bslash("user"));
 	    }
-	    result.path = new URL(plan.$bslash("path").toString());
-		result.connectionType = ConnectionType.valueOf(plan.$bslash("connectionType").toString());
+	    result.path = new URL(JSONHelper.JsStringToString(plan.$bslash("path")));
+		result.connectionType = ConnectionType.valueOf(JSONHelper.JsStringToString(plan.$bslash("connectionType")));
 	    result.numRuns = ((JsNumber)plan.$bslash("numRuns")).value().intValue();
 	    result.parallelity = ((JsNumber)plan.$bslash("parallelity")).value().intValue();
 	    result.waitBetweenMsgs = ((JsNumber)plan.$bslash("waitBetweenMsgs")).value().intValue();

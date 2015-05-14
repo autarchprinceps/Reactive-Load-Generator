@@ -8,11 +8,12 @@
     <script src="http://code.jquery.com/jquery-2.1.4.min.js"/>
 </head>
 <body>
-    <input id="in" type="text"/><button id="in_act"/>
+    <input id="in" type="text"/><button id="in_act">Send</button>
+    <br>
     <div id="out"></div>
     <script>
         $(function() {
-            var ws = windows['MozWebSocket'] ? windows['MozWebSocket'] : WebSocket;
+            var ws = window['MozWebSocket'] ? window['MozWebSocket'] : WebSocket;
             var socket = new ws('@routes.Application.socket().webSocketURL(request)');
 
             socket.onmessage = function(event) {
@@ -20,7 +21,7 @@
             }
 
             $('#in_act').click(function(event) {
-                // TODO make JSON from #in
+                // socket.send(event.data);
             });
         });
     </script>
