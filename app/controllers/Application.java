@@ -78,7 +78,6 @@ public class Application extends Controller {
 		return WebSocket.whenReady((in, out) -> {
 			System.out.println("DEBUG: echo opened");
 			in.onMessage(out::write);
-			in.onMessage((str) -> out.write(new ObjectId(str).toString()));
 			out.write("Hallo");
 		});
 	}

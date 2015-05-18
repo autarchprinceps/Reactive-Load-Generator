@@ -162,9 +162,12 @@ public class UIInstance extends UntypedActor {
 						DBGetCMD dbGetCMD = new DBGetCMD();
 						dbGetCMD.t = DBGetCMD.Type.PlanByID;
 						dbGetCMD.id = new ObjectId(JSONHelper.JsStringToString(json.$bslash("id")));
+						System.out.println(dbGetCMD.id.toString());
 						db.tell(dbGetCMD, getSelf());
-						dbGetCMD.t = DBGetCMD.Type.AllRunsForPlan;
-						db.tell(dbGetCMD, getSelf());
+						DBGetCMD dbGetCMD2 = new DBGetCMD();
+						dbGetCMD2.t = DBGetCMD.Type.AllRunsForPlan;
+						dbGetCMD2.id = dbGetCMD.id;
+						db.tell(dbGetCMD2, getSelf());
 					} else {
 						ws(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
 					}
