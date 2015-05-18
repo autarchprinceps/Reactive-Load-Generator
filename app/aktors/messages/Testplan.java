@@ -24,7 +24,7 @@ public class Testplan {
     public boolean equals(Object obj) {
         return
             ((obj instanceof Testplan) && ((Testplan)obj).id.equals(id))
-        ||  ((obj instanceof JsObject) && new ObjectId(((JsObject)obj).$bslash("id").toString()).equals(id));
+        ||  ((obj instanceof JsObject) && new ObjectId(JSONHelper.JsStringToString(((JsObject) obj).$bslash("id"))).equals(id));
     }
 
     public enum ConnectionType {
