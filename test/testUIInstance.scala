@@ -53,8 +53,8 @@ object testUIInstance {
 			var name = "" + alphabet.charAt(i % alphabet.length)
 			var password = "" + alphabet.charAt(i % alphabet.length)
 			for(j <- 0 until i / 10 + 5) {
-				name += alphabet.charAt((i + j + random.nextInt(i)) % alphabet.length)
-				password += alphabet.charAt((i + j + random.nextInt(i)) % alphabet.length)
+				name += alphabet.charAt((i + j + random.nextInt(i+1)) % alphabet.length)
+				password += alphabet.charAt((i + j + random.nextInt(i+1)) % alphabet.length)
 			}
 			ws(List(
 				("type", JsString("register"))
@@ -98,7 +98,7 @@ object testUIInstance {
 		for(i <- 0 until 10000) {
 			val tmp = new Testplan()
 			tmp.connectionType = ConnectionType.HTTP
-			tmp.numRuns = i + random.nextInt(100 * i)
+			tmp.numRuns = i + random.nextInt(100 * i + 1)
 			tmp.parallelity = 1 + random.nextInt(20)
 			tmp.path = new URL("http://localhost:1301") // TODO Server needs to be started at that address, from Java?
 			tmp.waitBeforeStart = 0

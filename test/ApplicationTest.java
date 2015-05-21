@@ -31,24 +31,13 @@ public class ApplicationTest {
     @Test
     public void simpleCheck() {
         System.out.println("simpleCheck");
-        // assertThat(false);
         int a = 1 + 1;
         assertThat(a).isEqualTo(5);
     }
 
     @Test
-    public void renderTemplate() {
-        System.out.println("renderTemplate");
-        // assertThat(false);
-        Content html = views.html.index.render("Your new application is ready.");
-        assertThat(contentType(html)).isEqualTo("text/html");
-        assertThat(contentAsString(html)).contains("Your new application is ready.");
-    }
-
-    @Test
     public void dbTest() {
         System.out.println("dbTest");
-        // assertThat(false);
         Random random = new Random();
         ActorSystem as = ActorSystem.create();
         ActorRef db_ref = as.actorOf(Props.create(DB.class, "junit_loadgen"));
@@ -66,8 +55,8 @@ public class ApplicationTest {
             String name = "" + alphabet.charAt(i % alphabet.length());
             String password = "" + alphabet.charAt(i % alphabet.length());
             for(int j = 0; j < i / 10 + 5; j++) {
-                name += alphabet.charAt((i + j + random.nextInt(i)) % alphabet.length());
-                password += alphabet.charAt((i + j + random.nextInt(i)) % alphabet.length());
+                name += alphabet.charAt((i + j + random.nextInt(i+1)) % alphabet.length());
+                password += alphabet.charAt((i + j + random.nextInt(i+1)) % alphabet.length());
             }
             User tmp = new User(
                 new ObjectId()
@@ -114,12 +103,12 @@ public class ApplicationTest {
         runs.parallelStream().forEach(testrun -> {
             List<LoadWorkerRaw> tmps = new ArrayList<>();
             for (int i = 0; i < testrun.testplan.numRuns * testrun.testplan.parallelity; i++) {
-                int rstart = random.nextInt(i);
+                int rstart = random.nextInt(i+1);
                 LoadWorkerRaw tmp = new LoadWorkerRaw(
                         testrun
                     ,   i / testrun.testplan.parallelity
                     ,   rstart
-                    ,   rstart + random.nextInt(i / 2)
+                    ,   rstart + random.nextInt(i / 2 + 1)
                 );
 	            inbox.send(db_ref, tmp);
                 tmps.add(tmp);
