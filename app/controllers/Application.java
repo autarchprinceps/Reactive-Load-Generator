@@ -4,6 +4,7 @@ package controllers;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
@@ -21,6 +22,7 @@ import play.api.libs.json.JsValue;
 import play.api.libs.json.Json;
 import play.libs.F;
 import play.mvc.*;
+import tests.Test;
 import views.html.index;
 import views.html.tws;
 
@@ -81,4 +83,24 @@ public class Application extends Controller {
 			out.write("Hallo");
 		});
 	}
+
+    public static WebSocket<String> test() {
+	    return WebSocket.whenReady((in, out) ->
+		    in.onMessage((message) -> {
+			    List<String> problems;
+			    switch(message) {
+				    case "db":
+					    problems = Test.dbTest();
+					    break;
+				    case "uii":
+					    problems = Test.testUII();
+					    break;
+				    default:
+					    out.write("Invalid test");
+					    return;
+			    }
+			    problems.parallelStream().forEach((problem) -> out.write(problem));
+		    })
+	    );
+    }
 }

@@ -1,12 +1,14 @@
+package tests
+
 import java.net.URL
+import java.util
 import java.util.concurrent.TimeUnit
 
-import akka.actor.{Props, Inbox, ActorSystem}
+import akka.actor.{ActorSystem, Inbox, Props}
 import aktors.messages.Testplan.ConnectionType
-import aktors.messages.{Testrun, Testplan, DBDelCMD}
+import aktors.messages.{DBDelCMD, Testplan, Testrun}
 import aktors.{DB, UIInstance}
-import org.fest.assertions.Assertions._
-import play.api.libs.json.{JsValue, JsString, JsObject}
+import play.api.libs.json.{JsObject, JsString, JsValue}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -16,12 +18,13 @@ import scala.util.Random
 /**
  * Created by autarch on 12.05.15.
  */
-object testUIInstance {
+class TestUIInstance {
 	val as = ActorSystem.create
 	val inbox = Inbox.create(as)
 	val uii = as.actorOf(Props.create(classOf[UIInstance], inbox.getRef, true.asInstanceOf[AnyRef]))
 	val db = as.actorOf(Props(classOf[DB]), "junit_loadgen")
 	val random = new Random
+	val problems = new util.LinkedList[String]()
 
 	def ws(what: Seq[(String, JsValue)]) = inbox.send(uii, JsObject(what))
 
@@ -32,7 +35,7 @@ object testUIInstance {
 
 	def get : JsObject = inbox.receive(Duration.create(1, TimeUnit.MINUTES)).asInstanceOf[JsObject]
 
-	def apply() = {
+	def apply() : util.List[String] = {
 		testNotAuth
 		testRegLogin
 		testStorePlan
@@ -41,6 +44,7 @@ object testUIInstance {
 		testLoadPlan
 		testLoadRun
 		drop
+		return problems
 	}
 
 	def testNotAuth = {
@@ -61,20 +65,20 @@ object testUIInstance {
 			,	("name", JsString(name))
 			,	("password", JsString(password))
 			))
-			assertThat(answerCheckType("registered"))
+			if(!answerCheckType("registered")) problems.add(Test.problem(new Exception().getStackTrace()(0), "Register failed: " + i + " " + name + " " + password))
 			ws(List(
 				("type", JsString("login"))
 			,	("name", JsString(name))
 			,	("password", JsString(password))
 			))
-			assertThat(answerCheckType("login"))
+			if(!answerCheckType("login")) problems.add(Test.problem(new Exception().getStackTrace()(0), "Login failed: " + i + " " + name + " " + password))
 			// TODO check authenticated
 			ws(List(
 				("type", JsString("logout"))
 			,	("name", JsString(name))
 			,	("password", JsString(password))
 			))
-			assertThat(answerCheckType("logout"))
+			if(!answerCheckType("logout")) problems.add(Test.problem(new Exception().getStackTrace()(0), "Logout failed: " + i + " " + name + " " + password))
 			// TODO check not auth
 		}
 
@@ -83,13 +87,13 @@ object testUIInstance {
 		,	("name", JsString("test"))
 		,	("password", JsString("test"))
 		))
-		assertThat(answerCheckType("registered"))
+		if(!answerCheckType("registered")) problems.add(Test.problem(new Exception().getStackTrace()(0), "Register failed: test test"))
 		ws(List(
 			("type", JsString("login"))
 		,	("name", JsString("test"))
 		,	("password", JsString("test"))
 		))
-		assertThat(answerCheckType("login"))
+		if(!answerCheckType("login")) problems.add(Test.problem(new Exception().getStackTrace()(0), "Login failed: test test"))
 	}
 
 	val testplans = new ArrayBuffer[Testplan](10000)
@@ -115,8 +119,8 @@ object testUIInstance {
 		ws(List(("type", JsString("all plans"))))
 		for(i <- 0 until 10000) {
 			val obj = get
-			assertThat(obj.\("type").toString()).isEqualTo("testplan")
-			assertThat(testplans contains(Testplan.fromJSON(obj.\("content").asInstanceOf[JsObject])))
+			if(!(obj.\("type").toString()).equals("testplan") && (testplans contains(Testplan.fromJSON(obj.\("content").asInstanceOf[JsObject]))))
+				problems.add(Test.problem(new Exception().getStackTrace()(0), "All plans failed: " + i + " result: " + obj.toString()))
 		}
 	}
 
@@ -134,12 +138,17 @@ object testUIInstance {
 				,	("testplan", tmptp.toJSON(false))
 				))
 				val tmpget = get
-				assertThat(tmpget.\("type").toString()).isEqualTo("runstart")
-				val tmprun = Testrun.fromJSON(tmpget.\("content").asInstanceOf[JsObject])
-				assertThat(tmprun.testplan.equals(tmptp))
-				tmpabuf += tmprun
-				for(k <- 0 until tmptp.numRuns * tmptp.parallelity) {
-					assertThat(get.\("type").toString()).isEqualTo("raw")
+				if(!tmpget.\("type").toString().equals("runstart")) {
+					problems.add(Test.problem(new Exception().getStackTrace()(0), "run not started: " + tmpget))
+				} else {
+					val tmprun = Testrun.fromJSON(tmpget.\("content").asInstanceOf[JsObject])
+					if(!tmprun.testplan.equals(tmptp))
+						problems.add(Test.problem(new Exception().getStackTrace()(0), "Wrong Testplan for run: " + tmpget))
+					tmpabuf += tmprun
+					for (k <- 0 until tmptp.numRuns * tmptp.parallelity) {
+						if(!get.\("type").toString().equals("raw"))
+							problems.add(Test.problem(new Exception().getStackTrace()(0), "Not enought raws received for Testrun: " + tmprun.toJSON(true)))
+					}
 				}
 			}
 		}
@@ -154,12 +163,13 @@ object testUIInstance {
 			))
 			for(j <- 0 until (testruns(tmptp) length) + 1) {
 				var response = get
-				assertThat(
+				if(!
 				(	get.\("type").toString().equals("testplan")
 				&&	Testplan.fromJSON(get.\("content").asInstanceOf[JsObject]).equals(tmptp))
 				||	(get.\("type").toString().equals("testrun")
 				&&	(testruns(tmptp) contains Testrun.fromJSON(get.\("content").asInstanceOf[JsObject])))
 				)
+					problems.add(Test.problem(new Exception().getStackTrace()(0), "Loading plan failed: " + response))
 			}
 		}
 	}
@@ -174,10 +184,14 @@ object testUIInstance {
 				,	("id", JsString(tmptrs(j).id.toString))
 				))
 				val recrun = get
-				assertThat(recrun.\("type").toString()).isEqualTo("testrun")
-				Testrun.fromJSON(recrun.\("content").asInstanceOf[JsObject]).equals(tmptrs(j))
-				for(k <- 0 until tmptp.parallelity * tmptp.numRuns) {
-					assertThat(get.\("type").toString()).isEqualTo("raw")
+				if(!recrun.\("type").toString().equals("testrun")) {
+					problems.add(Test.problem(new Exception().getStackTrace()(0), "Load run failed: " + recrun))
+				} else {
+					Testrun.fromJSON(recrun.\("content").asInstanceOf[JsObject]).equals(tmptrs(j))
+					for (k <- 0 until tmptp.parallelity * tmptp.numRuns) {
+						if(!get.\("type").toString().equals("raw"))
+							problems.add(Test.problem(new Exception().getStackTrace()(0), "Too few raws received: " + recrun))
+					}
 				}
 			}
 		}
@@ -189,7 +203,7 @@ object testUIInstance {
 		,	("name", JsString("test"))
 		,	("password", JsString("test"))
 		))
-		assertThat(answerCheckType("logout"))
+		if(!answerCheckType("logout")) problems.add(Test.problem(new Exception().getStackTrace()(0), "Final logout failed"))
 		val cmd = new DBDelCMD
 		cmd.t = DBDelCMD.Type.DB
 		inbox.send(db, cmd)
