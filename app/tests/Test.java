@@ -16,7 +16,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Created by Patrick on 21.05.15.
+ * Created by Patrick Robinson on 21.05.15.
  */
 public class Test {
 	public static String problem(StackTraceElement ex, String str) {
@@ -63,15 +63,15 @@ public class Test {
 			// insert plans
 			for (int i = 0; i < 100; i++) {
 				Testplan tmp = new Testplan();
-				tmp.user = users.get(random.nextInt(users.size()));
-				tmp.connectionType = Testplan.ConnectionType.values()[random.nextInt(Testplan.ConnectionType.values().length)];
-				tmp.numRuns = 1 + random.nextInt(20) + random.nextInt(20) + random.nextInt(20);
-				tmp.parallelity = 1 + random.nextInt(20);
-				tmp.id = new ObjectId();
-				tmp.waitBeforeStart = random.nextInt(10);
-				tmp.waitBetweenMsgs = random.nextInt(10);
+				tmp.user_(users.get(random.nextInt(users.size())));
+				tmp.connectionType_(ConnectionType.values()[random.nextInt(ConnectionType.values().length)]);
+				tmp.numRuns_(1 + random.nextInt(20) + random.nextInt(20) + random.nextInt(20));
+				tmp.parallelity_(1 + random.nextInt(20));
+				tmp.id_(new ObjectId());
+				tmp.waitBeforeStart_(random.nextInt(10));
+				tmp.waitBetweenMsgs_(random.nextInt(10));
 				try {
-					tmp.path = new URL("http://example.com:1337/test/blub"); // TODO autogen?
+					tmp.path_(new URL("http://example.com:1337/test/blub")); // TODO autogen?
 				} catch (MalformedURLException ex) {
 					ex.printStackTrace();
 					problems.add(problem(ex.getStackTrace()[0], "URL Malformed (Error in test, not code)"));
@@ -96,16 +96,16 @@ public class Test {
 			// insert raw
 			runs.parallelStream().forEach(testrun -> {
 				List<LoadWorkerRaw> tmps = new ArrayList<>();
-				for (int i = 0; i < testrun.testplan.numRuns * testrun.testplan.parallelity; i++) {
+				for (int i = 0; i < testrun.testplan.numRuns() * testrun.testplan.parallelity(); i++) {
 					int rstart = random.nextInt(i + 1);
 					LoadWorkerRaw tmp = new LoadWorkerRaw(
 						testrun
-						, i / testrun.testplan.parallelity
+						, i / testrun.testplan.parallelity()
 						, rstart
 						, rstart + random.nextInt(i / 2 + 1)
 					);
 					inbox.send(db_ref, tmp);
-					try {Thread.sleep(testrun.testplan.waitBetweenMsgs);} catch(Exception ex) {}
+					try {Thread.sleep(testrun.testplan.waitBetweenMsgs());} catch(Exception ex) {}
 					tmps.add(tmp);
 				}
 			});
@@ -134,7 +134,7 @@ public class Test {
 			plans.stream().map(testplan -> {
 				DBGetCMD result = new DBGetCMD();
 				result.t = DBGetCMD.Type.PlanByID;
-				result.id = testplan.id;
+				result.id = testplan.id();
 				return result;
 			}).forEach(dbGetCMD -> inbox.send(db_ref, dbGetCMD));
 			// Thread.sleep(1000);
@@ -176,7 +176,7 @@ public class Test {
 				inbox.send(db_ref, result);
 			});
 			// Thread.sleep(30000);
-			int totalrunraws = runs.parallelStream().map(testrun1 -> testrun1.testplan.parallelity * testrun1.testplan.numRuns).reduce(0, Integer::sum);
+			int totalrunraws = runs.parallelStream().map(testrun1 -> testrun1.testplan.parallelity() * testrun1.testplan.numRuns()).reduce(0, Integer::sum);
 			for (int i = 0; i < totalrunraws; i++) {
 				Object tmp = inbox.receive(Duration.create(200, TimeUnit.MINUTES));
 				if(!(tmp instanceof LoadWorkerRaw)) {
@@ -201,10 +201,10 @@ public class Test {
 				Testplan tmp = (Testplan) inbox.receive(Duration.create(200, TimeUnit.MINUTES)); // TODO FIX LoadRunRaw received?
 				testplanList.add(tmp);
 			}
-			testplanList.sort((t1, t2) -> t1.id.compareTo(t2.id));
+			testplanList.sort((t1, t2) -> t1.id().compareTo(t2.id()));
 			List<Testplan> copy = new ArrayList<>(plans.size());
 			Collections.copy(copy, plans);
-			copy.sort((t1, t2) -> t1.id.compareTo(t2.id));
+			copy.sort((t1, t2) -> t1.id().compareTo(t2.id()));
 			if(!Arrays.deepEquals(testplanList.toArray(), copy.toArray())) {
 				problems.add(problem(
 					new Exception().getStackTrace()[0],
@@ -217,7 +217,7 @@ public class Test {
 			List<Testrun> testrunList = new ArrayList<>(runs.size());
 			plans.stream().forEach(testplan1 -> {
 				DBGetCMD dbGetCMD = new DBGetCMD();
-				dbGetCMD.id = testplan1.id;
+				dbGetCMD.id = testplan1.id();
 				dbGetCMD.t = DBGetCMD.Type.AllRunsForPlan;
 				inbox.send(db_ref, dbGetCMD);
 			});
@@ -247,7 +247,7 @@ public class Test {
 			plans.stream().forEach(testplan -> {
 				DBDelCMD delCMD = new DBDelCMD();
 				delCMD.t = DBDelCMD.Type.Plan;
-				delCMD.id = testplan.id;
+				delCMD.id = testplan.id();
 				inbox.send(db_ref, delCMD);
 			});
 			users.stream().forEach(user -> {

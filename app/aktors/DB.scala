@@ -12,7 +12,7 @@ import scala.concurrent.Future
  * Created by Patrick Robinson on 02.05.15.
  */
 class DB(database : String) extends UntypedActor {
-	val client = MongoClient()
+	val client = MongoClient() // TODO multiple Verbindungen?
 	val db = client(database)
 	val testruncoll = db("testrun")
 	val testplancoll = db("testplan")
@@ -22,30 +22,29 @@ class DB(database : String) extends UntypedActor {
 
 	@throws[Exception](classOf[Exception])
 	override def onReceive(message: Any): Unit = {
-		// TODO maybe async?
 		message match {
-			case workerraw : LoadWorkerRaw => Future {
+			case workerraw : LoadWorkerRaw => { Future {
 				val query = MongoDBObject("_id" -> workerraw.testrun.id)
 				val run = MongoDBObject("start" -> workerraw.start, "end" -> workerraw.end, "iter" -> workerraw.iterOnWorker)
 				val update = $push("runs" -> run)
-				testruncoll.update(query, update) // TODO imperformant
-			}
-			case trun : Testrun => Future { testruncoll.insert(MongoDBObject("_id" -> trun.id, "testPlanId" -> trun.testplan.id)) }
-			case tplan : Testplan => Future { testplancoll.insert(MongoDBObject(
+				testruncoll.update(query, update) // TODO imperformant?
+			}}
+			case trun : Testrun => {Future { testruncoll.insert(MongoDBObject("_id" -> trun.id, "testPlanId" -> trun.testplan.id)) }}
+			case tplan : Testplan => {Future { testplancoll.insert(MongoDBObject(
 				"_id" -> tplan.id
 			,	"numRuns" -> tplan.numRuns
 			,	"parallelity" -> tplan.parallelity
-			,	"path" -> tplan.path.toString()
+			,	"path" -> tplan.path.toString
 			,	"waitBetweenMsgs" -> tplan.waitBetweenMsgs
 			,	"waitBeforeStart" -> tplan.waitBeforeStart
-			,	"connectionType" -> tplan.connectionType
+			,	"connectionType" -> tplan.connectionType.toString
 			,	"user" -> tplan.user.id
-			)) }
-			case user : User => Future { usercoll.insert(MongoDBObject( // TODO what if user exists already?
+			)) }}
+			case user : User => {Future { usercoll.insert(MongoDBObject( // TODO what if user exists already?
 				"_id" -> user.id
 			,	"name" -> user.name
 			,   "password" -> user.getPassword
-			)) }
+			)) }}
 			case getCMD : DBGetCMD => {
 				getCMD.t match {
 					case DBGetCMD.Type.AllPlansForUser => {

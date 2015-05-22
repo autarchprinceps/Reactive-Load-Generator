@@ -14,7 +14,7 @@ import aktors.LoadWorker;
 import aktors.UIInstance;
 import aktors.messages.Testplan;
 import aktors.messages.Testrun;
-import aktors.messages.Testplan.ConnectionType;
+import aktors.messages.ConnectionType;
 import org.bson.types.ObjectId;
 import play.mvc.*;
 import tests.Test;
@@ -46,13 +46,13 @@ public class Application extends Controller {
 
         //create test testplan and run
         Testplan myTestplan = new Testplan();
-        myTestplan.id = new ObjectId();
-        myTestplan.numRuns = 1; // Per Parallel Worker
-        myTestplan.parallelity = 1;
-        myTestplan.path = new URL("http://www.google.com");
-        myTestplan.waitBetweenMsgs = 0;
-        myTestplan.waitBeforeStart = 0;
-        myTestplan.connectionType = ConnectionType.HTTP;
+        myTestplan.id_(new ObjectId());
+        myTestplan.numRuns_(1); // Per Parallel Worker
+        myTestplan.parallelity_(1);
+        myTestplan.path_(new URL("http://www.google.com"));
+        myTestplan.waitBetweenMsgs_(0);
+        myTestplan.waitBeforeStart_(0);
+        myTestplan.connectionType_(ConnectionType.HTTP);
 
         Testrun myTestrun = new Testrun();
         myTestrun.id = new ObjectId();

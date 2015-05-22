@@ -43,13 +43,62 @@ class Testplan {
 		case _ => false
 	}
 
-	var id: ObjectId = null
-	var numRuns: Int = 0
-	var parallelity: Int = 0
-	var path: URL = null
-	var waitBetweenMsgs: Int = 0
-	var waitBeforeStart: Int = 0
-	var connectionType: ConnectionType = ConnectionType.HTTP
+	private[this] var _id: ObjectId = null
+
+	def id: ObjectId = _id
+
+	def id_(value: ObjectId): Unit = {
+	  _id = value
+	}
+
+	private[this] var _numRuns: Int = 0
+
+	def numRuns: Int = _numRuns
+
+	def numRuns_(value: Int): Unit = {
+	  _numRuns = value
+	}
+
+	private[this] var _parallelity: Int = 0
+
+	def parallelity: Int = _parallelity
+
+	def parallelity_(value: Int): Unit = {
+	  _parallelity = value
+	}
+
+	private[this] var _path: URL = null
+
+	def path: URL = _path
+
+	def path_(value: URL): Unit = {
+	  _path = value
+	}
+
+	private[this] var _waitBetweenMsgs: Int = 0
+
+	def waitBetweenMsgs: Int = _waitBetweenMsgs
+
+	def waitBetweenMsgs_(value: Int): Unit = {
+	  _waitBetweenMsgs = value
+	}
+
+	private[this] var _waitBeforeStart: Int = 0
+
+	def waitBeforeStart: Int = _waitBeforeStart
+
+	def waitBeforeStart_(value: Int): Unit = {
+	  _waitBeforeStart = value
+	}
+
+	private[this] var _connectionType: ConnectionType = ConnectionType.HTTP
+
+	def connectionType: ConnectionType = _connectionType
+
+	def connectionType_(value: ConnectionType): Unit = {
+	  _connectionType = value
+	}
+
 	var _user: Future[User] = null
 
 	def user: User = Await.result(_user, Duration(10, TimeUnit.MINUTES))
