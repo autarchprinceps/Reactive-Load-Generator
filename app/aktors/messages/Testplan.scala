@@ -9,6 +9,7 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import java.net.MalformedURLException
 import java.net.URL
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * Created by Patrick Robinson on 20.04.15.
@@ -17,19 +18,20 @@ object Testplan {
 	@throws(classOf[MalformedURLException])
 	def fromJSON(plan: JsObject): Testplan = {
 		val result: Testplan = new Testplan
-		result.id = if(plan.\("id").isInstanceOf[JsString])
+		result.id_(if(plan.\("id").isInstanceOf[JsString])
 			new ObjectId(JSONHelper.JsStringToString(plan.\("id")))
 		else
 			new ObjectId
-		if (plan.\("user").isInstanceOf[JsObject]) {
+		)
+		if(plan.\("user").isInstanceOf[JsObject]) {
 			result._user = Future { User.fromJSON(plan.\("user").asInstanceOf[JsObject]) }
 		}
-		result.path = new URL(JSONHelper.JsStringToString(plan.\("path")))
-		result.connectionType = ConnectionType.valueOf(JSONHelper.JsStringToString(plan.\("connectionType")))
-		result.numRuns = (plan.\("numRuns").asInstanceOf[JsNumber]).value.intValue
-		result.parallelity = (plan.\("parallelity").asInstanceOf[JsNumber]).value.intValue
-		result.waitBetweenMsgs = if (plan.\("waitBetweenMsgs").isInstanceOf[JsNumber]) (plan.\("waitBetweenMsgs").asInstanceOf[JsNumber]).value.intValue else 0
-		result.waitBeforeStart = if (plan.\("waitBeforeStart").isInstanceOf[JsNumber]) (plan.\("waitBeforeStart").asInstanceOf[JsNumber]).value.intValue else 0
+		result.path_(new URL(JSONHelper.JsStringToString(plan.\("path"))))
+		result.connectionType_(ConnectionType.valueOf(JSONHelper.JsStringToString(plan.\("connectionType"))))
+		result.numRuns_((plan.\("numRuns").asInstanceOf[JsNumber]).value.intValue)
+		result.parallelity_((plan.\("parallelity").asInstanceOf[JsNumber]).value.intValue)
+		result.waitBetweenMsgs_(if (plan.\("waitBetweenMsgs").isInstanceOf[JsNumber]) (plan.\("waitBetweenMsgs").asInstanceOf[JsNumber]).value.intValue else 0)
+		result.waitBeforeStart_(if (plan.\("waitBeforeStart").isInstanceOf[JsNumber]) (plan.\("waitBeforeStart").asInstanceOf[JsNumber]).value.intValue else 0)
 		return result
 	}
 }

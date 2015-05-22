@@ -5,7 +5,7 @@ import java.util
 import java.util.concurrent.TimeUnit
 
 import akka.actor.{ActorSystem, Inbox, Props}
-import aktors.messages.Testplan.ConnectionType
+import aktors.messages.ConnectionType
 import aktors.messages.{DBDelCMD, Testplan, Testrun}
 import aktors.{DB, UIInstance}
 import com.typesafe.config.ConfigFactory
@@ -108,12 +108,12 @@ class TestUIInstance {
 	def testStorePlan = {
 		for(i <- 0 until 50) {
 			val tmp = new Testplan()
-			tmp.connectionType = ConnectionType.HTTP
-			tmp.numRuns = i + random.nextInt(i + 1)
-			tmp.parallelity = 1 + random.nextInt(10)
-			tmp.path = new URL("http://localhost:1301") // TODO Server needs to be started at that address, from Java?
-			tmp.waitBeforeStart = 0
-			tmp.waitBetweenMsgs = 0
+			tmp.connectionType_(ConnectionType.HTTP)
+			tmp.numRuns_(i + random.nextInt(i + 1))
+			tmp.parallelity_(1 + random.nextInt(10))
+			tmp.path_(new URL("http://localhost:1301")) // TODO Server needs to be started at that address, from Java?
+			tmp.waitBeforeStart_(0)
+			tmp.waitBetweenMsgs_(0)
 			ws(List(
 				("type", JsString("store plan"))
 			,	("testplan", tmp.toJSON(false))

@@ -5,6 +5,7 @@ import java.net.URL
 import akka.actor.UntypedActor
 import aktors.messages._
 import com.mongodb.casbah.Imports._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 import scala.concurrent.Future
 
@@ -126,13 +127,13 @@ class DB(database : String) extends UntypedActor {
 			// TODO utilise currentuser, when account subsystem is implemented?
 			val planObject = new Testplan()
 			planObject._user = Future { getUser(document.getAs[ObjectId]("user").get) }
-			planObject.id = document.getAs[ObjectId]("_id").get
-			planObject.waitBeforeStart = document.getAs[Int]("waitBeforeStart").get
-			planObject.waitBetweenMsgs = document.getAs[Int]("waitBetweenMsgs").get
-			planObject.parallelity = document.getAs[Int]("parallelity").get
-			planObject.numRuns = document.getAs[Int]("numRuns").get
-			planObject.path = new URL(document.getAs[String]("path").get)
-			planObject.connectionType = ConnectionType.valueOf(document.getAs[String]("connectionType").get)
+			planObject.id_(document.getAs[ObjectId]("_id").get)
+			planObject.waitBeforeStart_(document.getAs[Int]("waitBeforeStart").get)
+			planObject.waitBetweenMsgs_(document.getAs[Int]("waitBetweenMsgs").get)
+			planObject.parallelity_(document.getAs[Int]("parallelity").get)
+			planObject.numRuns_(document.getAs[Int]("numRuns").get)
+			planObject.path_(new URL(document.getAs[String]("path").get))
+			planObject.connectionType_(ConnectionType.valueOf(document.getAs[String]("connectionType").get))
 			return planObject
 		}
 
