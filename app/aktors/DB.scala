@@ -26,7 +26,7 @@ class DB(database : String) extends UntypedActor {
 				val query = MongoDBObject("_id" -> workerraw.testrun.id)
 				val run = MongoDBObject("start" -> workerraw.start, "end" -> workerraw.end, "iter" -> workerraw.iterOnWorker)
 				val update = $push("runs" -> run)
-				testruncoll.update(query, update)
+				testruncoll.update(query, update) // TODO imperformant
 			}
 			case trun : Testrun => testruncoll.insert(MongoDBObject("_id" -> trun.id, "testPlanId" -> trun.testplan.id))
 			case tplan : Testplan => testplancoll.insert(MongoDBObject(
@@ -58,9 +58,10 @@ class DB(database : String) extends UntypedActor {
 					case DBGetCMD.Type.RunRaws => {
 						val testrunobj = testruncoll.findOneByID(getCMD.id).get
 						val testrun = convertRun(testrunobj) // TODO expensive, can cut somehow?
-						testrunobj.getAs[MongoCollection]("runs").get.foreach(obj => // TODO works?
-							getSender().tell(new LoadWorkerRaw(testrun, obj.getAs[Int]("iter").get, obj.getAs[Long]("start").get, obj.getAs[Long]("end").get), getSelf())
-						)
+						testrunobj.getAs[MongoDBList]("runs").get.foreach(obj => {
+							val raw = obj.asInstanceOf[BasicDBObject]
+							getSender().tell(new LoadWorkerRaw(testrun, raw.getAs[Int]("iter").get, raw.getAs[Long]("start").get, raw.getAs[Long]("end").get), getSelf())
+						})
 					}
 				}
 			}

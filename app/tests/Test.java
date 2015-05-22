@@ -37,7 +37,7 @@ public class Test {
 
 			// insert users
 			String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-			for (int i = 0; i < 200; i++) {
+			for (int i = 0; i < 20; i++) {
 				String name = "" + alphabet.charAt(i % alphabet.length());
 				String password = "" + alphabet.charAt(i % alphabet.length());
 				for (int j = 0; j < i / 10 + 5; j++) {
@@ -53,14 +53,14 @@ public class Test {
 				users.add(tmp);
 			}
 			System.out.println("dbTest users created, starting insert plans");
-			Thread.sleep(1000);
+			// Thread.sleep(1000);
 			// insert plans
-			for (int i = 0; i < 1000; i++) {
+			for (int i = 0; i < 100; i++) {
 				Testplan tmp = new Testplan();
 				tmp.user = users.get(random.nextInt(users.size()));
 				tmp.connectionType = Testplan.ConnectionType.values()[random.nextInt(Testplan.ConnectionType.values().length)];
-				tmp.numRuns = random.nextInt(200) + random.nextInt(200) + random.nextInt(200);
-				tmp.parallelity = 1 + random.nextInt(50);
+				tmp.numRuns = 1 + random.nextInt(20) + random.nextInt(20) + random.nextInt(20);
+				tmp.parallelity = 1 + random.nextInt(20);
 				tmp.id = new ObjectId();
 				tmp.waitBeforeStart = random.nextInt(10);
 				tmp.waitBetweenMsgs = random.nextInt(10);
@@ -74,7 +74,7 @@ public class Test {
 				plans.add(tmp);
 			}
 			System.out.println("dbTest plans inserted, starting insert runs");
-			Thread.sleep(10000);
+			// Thread.sleep(10000);
 			// insert runs
 			plans.stream().forEach(testplan1 -> {
 				for (int i = 0; i < 3; i++) {
@@ -86,7 +86,7 @@ public class Test {
 				}
 			});
 			System.out.println("dbTest runs inserted, starting insert raw");
-			Thread.sleep(20000);
+			// Thread.sleep(20000);
 			// insert raw
 			runs.parallelStream().forEach(testrun -> {
 				List<LoadWorkerRaw> tmps = new ArrayList<>();
@@ -104,7 +104,7 @@ public class Test {
 				}
 			});
 			System.out.println("dbTest raws inserted, starting get user");
-			Thread.sleep(1000);
+			// Thread.sleep(100000);
 			// get users
 			users.stream().map((user -> {
 				DBGetCMD result = new DBGetCMD();
@@ -112,9 +112,9 @@ public class Test {
 				result.id = user.id;
 				return result;
 			})).forEach(dbGetCMD -> inbox.send(db_ref, dbGetCMD));
-			Thread.sleep(1000);
+			// Thread.sleep(30000);
 			for (int i = 0; i < users.size(); i++) {
-				User u = (User) inbox.receive(Duration.create(1, TimeUnit.MINUTES));
+				User u = (User) inbox.receive(Duration.create(200, TimeUnit.MINUTES));
 				if(users.stream().filter(user -> user.id == u.id && user.name == u.name && u.check(user.getPassword())).count() != 1) {
 					problems.add(problem(
 						new Exception().getStackTrace()[0],
@@ -123,7 +123,7 @@ public class Test {
 				}
 			}
 			System.out.println("dbTest users got, starting get plans");
-			Thread.sleep(10000);
+			// Thread.sleep(10000);
 			// get plans
 			plans.stream().map(testplan -> {
 				DBGetCMD result = new DBGetCMD();
@@ -131,9 +131,9 @@ public class Test {
 				result.id = testplan.id;
 				return result;
 			}).forEach(dbGetCMD -> inbox.send(db_ref, dbGetCMD));
-			Thread.sleep(1000);
+			// Thread.sleep(1000);
 			for (int i = 0; i < plans.size(); i++) {
-				Testplan p = (Testplan) inbox.receive(Duration.create(1, TimeUnit.MINUTES));
+				Testplan p = (Testplan) inbox.receive(Duration.create(200, TimeUnit.MINUTES));
 				if(plans.stream().filter(plan -> plan.equals(p)).count() != 1) { // TODO Does equals have to be implemented manually in Testplan ?!
 					problems.add(problem(
 						new Exception().getStackTrace()[0],
@@ -142,7 +142,7 @@ public class Test {
 				}
 			}
 			System.out.println("dbTest plans got, starting get runs");
-			Thread.sleep(10000);
+			// Thread.sleep(10000);
 			// get runs
 			runs.stream().map(testrun -> {
 				DBGetCMD result = new DBGetCMD();
@@ -150,9 +150,9 @@ public class Test {
 				result.id = testrun.id;
 				return result;
 			}).forEach(dbGetCMD -> inbox.send(db_ref, dbGetCMD));
-			Thread.sleep(1000);
+			// Thread.sleep(1000);
 			for (int i = 0; i < plans.size(); i++) {
-				Testrun r = (Testrun) inbox.receive(Duration.create(1, TimeUnit.MINUTES));
+				Testrun r = (Testrun) inbox.receive(Duration.create(200, TimeUnit.MINUTES));
 				if(runs.stream().filter(run -> run.equals(r)).count() != 1) { // TODO Does equals have to be implemented manually ?!
 					problems.add(problem(
 						new Exception().getStackTrace()[0],
@@ -161,7 +161,7 @@ public class Test {
 				}
 			}
 			System.out.println("dbTest got runs, starting get raw");
-			Thread.sleep(10000);
+			// Thread.sleep(10000);
 			// get raw
 			runs.stream().forEach(testrun1 -> {
 				DBGetCMD result = new DBGetCMD();
@@ -169,10 +169,10 @@ public class Test {
 				result.id = testrun1.id;
 				inbox.send(db_ref, result);
 			});
-			Thread.sleep(1000);
+			// Thread.sleep(30000);
 			int totalrunraws = runs.parallelStream().map(testrun1 -> testrun1.testplan.parallelity * testrun1.testplan.numRuns).reduce(0, Integer::sum);
 			for (int i = 0; i < totalrunraws; i++) {
-				Object tmp = inbox.receive(Duration.create(1, TimeUnit.MINUTES));
+				Object tmp = inbox.receive(Duration.create(200, TimeUnit.MINUTES));
 				if(!(tmp instanceof LoadWorkerRaw)) {
 					problems.add(problem(
 						new Exception().getStackTrace()[0],
@@ -181,7 +181,7 @@ public class Test {
 				}
 			}
 			System.out.println("dbTest got raws, starting get all plans for user");
-			Thread.sleep(10000);
+			// Thread.sleep(10000);
 			// get all plans for user
 			List<Testplan> testplanList = new ArrayList<>(plans.size());
 			users.stream().map(user -> {
@@ -190,9 +190,9 @@ public class Test {
 				result.id = user.id;
 				return result;
 			}).forEach(dbGetCMD -> inbox.send(db_ref, dbGetCMD));
-			Thread.sleep(1000);
+			// Thread.sleep(30000);
 			for (int i = 0; i < plans.size(); i++) {
-				Testplan tmp = (Testplan) inbox.receive(Duration.create(1, TimeUnit.MINUTES));
+				Testplan tmp = (Testplan) inbox.receive(Duration.create(200, TimeUnit.MINUTES));
 				testplanList.add(tmp);
 			}
 			testplanList.sort((t1, t2) -> t1.id.compareTo(t2.id));
@@ -206,7 +206,7 @@ public class Test {
 				));
 			}
 			System.out.println("dbTest go all plans for user, starting get all run for plan");
-			Thread.sleep(10000);
+			// Thread.sleep(10000);
 			// get all run for plan
 			List<Testrun> testrunList = new ArrayList<>(runs.size());
 			plans.stream().forEach(testplan1 -> {
@@ -215,8 +215,9 @@ public class Test {
 				dbGetCMD.t = DBGetCMD.Type.AllRunsForPlan;
 				inbox.send(db_ref, dbGetCMD);
 			});
+			// Thread.sleep(30000);
 			for (int i = 0; i < runs.size(); i++) {
-				testrunList.add((Testrun) inbox.receive(Duration.create(1, TimeUnit.MINUTES)));
+				testrunList.add((Testrun) inbox.receive(Duration.create(200, TimeUnit.MINUTES)));
 			}
 			testrunList.sort((t1, t2) -> t1.id.compareTo(t2.id));
 			List<Testrun> rcpy = new ArrayList<>(runs.size());
@@ -229,7 +230,7 @@ public class Test {
 				));
 			}
 			System.out.println("dbTest got all runs for plan, starting delete");
-			Thread.sleep(10000);
+			// Thread.sleep(10000);
 			// delete
 			runs.stream().forEach(testrun -> {
 				DBDelCMD delCMD = new DBDelCMD();
@@ -250,7 +251,7 @@ public class Test {
 				inbox.send(db_ref, delCMD);
 			});
 			System.out.println("dbTest deleted, starting close");
-			Thread.sleep(30000);
+			// Thread.sleep(30000);
 			inbox.send(db_ref, "close");
 		} catch(Exception ex) {
 			ex.printStackTrace();

@@ -48,12 +48,12 @@ class TestUIInstance {
 	}
 
 	def testNotAuth = {
-
+		// TODO
 	}
 
 	def testRegLogin = {
 		val alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-		for(i <- 0 until 200) {
+		for(i <- 0 until 20) {
 			var name = "" + alphabet.charAt(i % alphabet.length)
 			var password = "" + alphabet.charAt(i % alphabet.length)
 			for(j <- 0 until i / 10 + 5) {
@@ -96,14 +96,14 @@ class TestUIInstance {
 		if(!answerCheckType("login")) problems.add(Test.problem(new Exception().getStackTrace()(0), "Login failed: test test"))
 	}
 
-	val testplans = new ArrayBuffer[Testplan](10000)
+	val testplans = new ArrayBuffer[Testplan](50)
 
 	def testStorePlan = {
-		for(i <- 0 until 10000) {
+		for(i <- 0 until 50) {
 			val tmp = new Testplan()
 			tmp.connectionType = ConnectionType.HTTP
-			tmp.numRuns = i + random.nextInt(100 * i + 1)
-			tmp.parallelity = 1 + random.nextInt(20)
+			tmp.numRuns = i + random.nextInt(i + 1)
+			tmp.parallelity = 1 + random.nextInt(10)
 			tmp.path = new URL("http://localhost:1301") // TODO Server needs to be started at that address, from Java?
 			tmp.waitBeforeStart = 0
 			tmp.waitBetweenMsgs = 0
@@ -117,7 +117,7 @@ class TestUIInstance {
 
 	def testAllPlans = {
 		ws(List(("type", JsString("all plans"))))
-		for(i <- 0 until 10000) {
+		for(i <- 0 until 50) {
 			val obj = get
 			if(!(obj.\("type").toString()).equals("testplan") && (testplans contains(Testplan.fromJSON(obj.\("content").asInstanceOf[JsObject]))))
 				problems.add(Test.problem(new Exception().getStackTrace()(0), "All plans failed: " + i + " result: " + obj.toString()))
