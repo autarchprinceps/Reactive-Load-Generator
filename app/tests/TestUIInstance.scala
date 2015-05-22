@@ -8,6 +8,7 @@ import akka.actor.{ActorSystem, Inbox, Props}
 import aktors.messages.Testplan.ConnectionType
 import aktors.messages.{DBDelCMD, Testplan, Testrun}
 import aktors.{DB, UIInstance}
+import com.typesafe.config.ConfigFactory
 import play.api.libs.json.{JsObject, JsString, JsValue}
 
 import scala.collection.mutable
@@ -19,7 +20,13 @@ import scala.util.Random
  * Created by autarch on 12.05.15.
  */
 class TestUIInstance {
-	val as = ActorSystem.create
+	val as: ActorSystem = ActorSystem.create(
+		"Test"
+	,   ConfigFactory.load(
+			ConfigFactory.parseString("akka.actor.dsl.inbox-size=1000000")
+				.withFallback(ConfigFactory.load)
+		)
+	)
 	val inbox = Inbox.create(as)
 	val uii = as.actorOf(Props.create(classOf[UIInstance], inbox.getRef, true.asInstanceOf[AnyRef]))
 	val db = as.actorOf(Props(classOf[DB]), "junit_loadgen")

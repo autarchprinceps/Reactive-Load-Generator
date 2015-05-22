@@ -6,6 +6,7 @@ import akka.actor.Inbox;
 import akka.actor.Props;
 import aktors.DB;
 import aktors.messages.*;
+import com.typesafe.config.ConfigFactory;
 import org.bson.types.ObjectId;
 import scala.concurrent.duration.Duration;
 
@@ -27,7 +28,12 @@ public class Test {
 		List<String> problems = new LinkedList<>();
 		try {
 			Random random = new Random();
-			ActorSystem as = ActorSystem.create();
+			ActorSystem as = ActorSystem.create(
+				"Test"
+			,   ConfigFactory.load(
+					ConfigFactory.parseString("akka.actor.dsl.inbox-size=1000000")
+						.withFallback(ConfigFactory.load())
+				));
 			ActorRef db_ref = as.actorOf(Props.create(DB.class, "junit_loadgen"));
 			Inbox inbox = Inbox.create(as);
 
