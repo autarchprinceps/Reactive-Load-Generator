@@ -10,7 +10,6 @@ import scala.Tuple2;
 import scala.collection.JavaConversions;
 
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,7 +24,7 @@ public class Testrun {
     public static Testrun fromJSON(JsObject run) throws MalformedURLException {
         Testrun result = new Testrun();
         result.id = new ObjectId(JSONHelper.JsStringToString(run.$bslash("id")));
-	    if(run.$bslash("testplan") instanceof JsObject) result.testplan = Testplan.fromJSON((JsObject)run.$bslash("testplan"));
+	    if(run.$bslash("testplan") instanceof JsObject) result.testplan = Testplan.fromJSON((JsObject) run.$bslash("testplan"));
         return result;
     }
 

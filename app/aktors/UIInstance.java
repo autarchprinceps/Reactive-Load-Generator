@@ -8,7 +8,6 @@ import aktors.messages.*;
 import helper.JSONHelper;
 import org.bson.types.ObjectId;
 import play.api.libs.json.JsObject;
-import play.api.libs.json.JsString;
 import play.api.libs.json.Json;
 
 import java.util.ArrayList;
@@ -123,8 +122,8 @@ public class UIInstance extends UntypedActor {
 					break;
 				case "store plan":
 					if (currentUser != null) {
-						Testplan tp = Testplan.fromJSON((JsObject)json.$bslash("testplan"));
-						tp.user = currentUser;
+						Testplan tp = Testplan.fromJSON((JsObject) json.$bslash("testplan"));
+						tp.user_(currentUser);
 						db.tell(tp, getSelf()); // TODO OK response necessary?
 					} else {
 						ws(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
@@ -132,8 +131,8 @@ public class UIInstance extends UntypedActor {
 					break;
 				case "start run":
 					if (currentUser != null) {
-						Testplan testplan = Testplan.fromJSON((JsObject)json.$bslash("testplan")); // TODO replace by DB lookup
-						testplan.user = currentUser;
+						Testplan testplan = Testplan.fromJSON((JsObject) json.$bslash("testplan")); // TODO replace by DB lookup
+						testplan.user_(currentUser);
 						ActorRef newRunner = as.actorOf(Props.create(
 							LoadRunner.class
 						,   as

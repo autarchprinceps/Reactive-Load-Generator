@@ -198,7 +198,7 @@ public class Test {
 			}).forEach(dbGetCMD -> inbox.send(db_ref, dbGetCMD));
 			// Thread.sleep(30000);
 			for (int i = 0; i < plans.size(); i++) {
-				Testplan tmp = (Testplan) inbox.receive(Duration.create(200, TimeUnit.MINUTES));
+				Testplan tmp = (Testplan) inbox.receive(Duration.create(200, TimeUnit.MINUTES)); // TODO FIX LoadRunRaw received?
 				testplanList.add(tmp);
 			}
 			testplanList.sort((t1, t2) -> t1.id.compareTo(t2.id));

@@ -4,7 +4,6 @@ import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
-import akka.actor.dsl.Creators;
 import aktors.messages.RunnerCMD;
 import aktors.messages.Testplan;
 import aktors.messages.Testrun;
@@ -35,8 +34,8 @@ public class LoadRunner extends UntypedActor {
 			parentSubscriber.tell(testrun, getSelf());
 		}
 
-        workers = new ArrayList<>(testrun.testplan.parallelity);
-        for(int i = 0; i < testrun.testplan.parallelity; i++) {
+        workers = new ArrayList<>(testrun.testplan.parallelity());
+        for(int i = 0; i < testrun.testplan.parallelity(); i++) {
             workers.add(as.actorOf(Props.create(LoadWorker.class)));
         }
 	}

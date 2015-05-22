@@ -65,11 +65,10 @@ class LoadWorkerRaw(run: Testrun, iter : Int, startTime : Long, endTime : Long) 
 
 	override def equals(other: Any): Boolean = other match {
 		case that: LoadWorkerRaw =>
-			(that canEqual this) &&
-				_testrun.equals(that.testrun) &&
-				_iterOnWorker == that.iterOnWorker &&
-				_start == that.start &&
-				_end == that.end
+			_testrun.equals(that.testrun) &&
+			_iterOnWorker == that.iterOnWorker &&
+			_start == that.start &&
+			_end == that.end
 		case _ => false
 	}
 

@@ -3,9 +3,10 @@ package aktors
 import java.net.URL
 
 import akka.actor.UntypedActor
-import aktors.messages.Testplan.ConnectionType
 import aktors.messages._
 import com.mongodb.casbah.Imports._
+
+import scala.concurrent.Future
 
 /**
  * Created by Patrick Robinson on 02.05.15.
@@ -21,46 +22,49 @@ class DB(database : String) extends UntypedActor {
 
 	@throws[Exception](classOf[Exception])
 	override def onReceive(message: Any): Unit = {
+		// TODO maybe async?
 		message match {
-			case workerraw : LoadWorkerRaw => {
+			case workerraw : LoadWorkerRaw => Future {
 				val query = MongoDBObject("_id" -> workerraw.testrun.id)
 				val run = MongoDBObject("start" -> workerraw.start, "end" -> workerraw.end, "iter" -> workerraw.iterOnWorker)
 				val update = $push("runs" -> run)
 				testruncoll.update(query, update) // TODO imperformant
 			}
-			case trun : Testrun => testruncoll.insert(MongoDBObject("_id" -> trun.id, "testPlanId" -> trun.testplan.id))
-			case tplan : Testplan => testplancoll.insert(MongoDBObject(
+			case trun : Testrun => Future { testruncoll.insert(MongoDBObject("_id" -> trun.id, "testPlanId" -> trun.testplan.id)) }
+			case tplan : Testplan => Future { testplancoll.insert(MongoDBObject(
 				"_id" -> tplan.id
 			,	"numRuns" -> tplan.numRuns
 			,	"parallelity" -> tplan.parallelity
 			,	"path" -> tplan.path.toString()
 			,	"waitBetweenMsgs" -> tplan.waitBetweenMsgs
 			,	"waitBeforeStart" -> tplan.waitBeforeStart
-			,	"connectionType" -> tplan.connectionType.toString()
+			,	"connectionType" -> tplan.connectionType
 			,	"user" -> tplan.user.id
-			))
-			case user : User => usercoll.insert(MongoDBObject( // TODO what if user exists already?
+			)) }
+			case user : User => Future { usercoll.insert(MongoDBObject( // TODO what if user exists already?
 				"_id" -> user.id
 			,	"name" -> user.name
 			,   "password" -> user.getPassword
-			))
+			)) }
 			case getCMD : DBGetCMD => {
 				getCMD.t match {
 					case DBGetCMD.Type.AllPlansForUser => {
-						testplancoll.find("user" $eq getCMD.id).foreach(planDocument => getSender().tell(convertPlan(planDocument), getSelf()))
+						testplancoll.find("user" `=` getCMD.id).foreach(planDocument => getSender().tell(convertPlan(planDocument), getSelf()))
 					}
 					case DBGetCMD.Type.AllRunsForPlan => {
-						testruncoll.find("testPlanId" $eq getCMD.id).foreach(runDocument => getSender().tell(convertRun(runDocument), getSelf()))
+						testruncoll.find("testPlanId" `=` getCMD.id).foreach(runDocument => getSender().tell(convertRun(runDocument), getSelf()))
 					}
 					case DBGetCMD.Type.PlanByID => getSender().tell(getPlan(getCMD.id), getSelf())
 					case DBGetCMD.Type.RunByID => getSender().tell(getRun(getCMD.id), getSelf())
 					case DBGetCMD.Type.UserByID => getSender().tell(getUser(getCMD.id), getSelf())
 					case DBGetCMD.Type.RunRaws => {
 						val testrunobj = testruncoll.findOneByID(getCMD.id).get
-						val testrun = convertRun(testrunobj) // TODO expensive, can cut somehow?
+						val testrunF : Future[Testrun] = Future { convertRun(testrunobj) } // TODO expensive, can cut somehow?
 						testrunobj.getAs[MongoDBList]("runs").get.foreach(obj => {
 							val raw = obj.asInstanceOf[BasicDBObject]
-							getSender().tell(new LoadWorkerRaw(testrun, raw.getAs[Int]("iter").get, raw.getAs[Long]("start").get, raw.getAs[Long]("end").get), getSelf())
+							testrunF onSuccess {
+								case testrun => getSender().tell(new LoadWorkerRaw(testrun, raw.getAs[Int]("iter").get, raw.getAs[Long]("start").get, raw.getAs[Long]("end").get), getSelf())
+							}
 						})
 					}
 				}
@@ -120,10 +124,9 @@ class DB(database : String) extends UntypedActor {
 		}
 
 		def convertPlan(document : testplancoll.T) : Testplan = {
-			// TODO use github.com/scala/async ?
 			// TODO utilise currentuser, when account subsystem is implemented?
 			val planObject = new Testplan()
-			planObject.user = getUser(document.getAs[ObjectId]("user").get)
+			planObject._user = Future { getUser(document.getAs[ObjectId]("user").get) }
 			planObject.id = document.getAs[ObjectId]("_id").get
 			planObject.waitBeforeStart = document.getAs[Int]("waitBeforeStart").get
 			planObject.waitBetweenMsgs = document.getAs[Int]("waitBetweenMsgs").get
@@ -141,7 +144,7 @@ class DB(database : String) extends UntypedActor {
 		def convertRun(runDocument : testruncoll.T) : Testrun = {
 			val runObject = new Testrun()
 			runObject.id = runDocument.getAs[ObjectId]("_id").get
-			runObject.testplan = getPlan(runDocument.getAs[ObjectId]("testPlanId").get)
+			runObject.testplan = getPlan(runDocument.getAs[ObjectId]("testPlanId").get) // TODO async?
 			return runObject
 		}
 	}

@@ -1,8 +1,6 @@
 package aktors;
 
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.io.InputStreamReader;
 
@@ -33,20 +31,20 @@ public class LoadWorker extends UntypedActor {
             Testrun init = (Testrun)message;
             Testplan plan = init.testplan;
             t = new Thread(() -> {
-                if (plan.waitBeforeStart > 0) {
+                if (plan.waitBeforeStart() > 0) {
                     try {
-                        Thread.sleep(plan.waitBeforeStart);
+                        Thread.sleep(plan.waitBeforeStart());
                     } catch (InterruptedException e) {
                         // TODO: WTF?
                     }
                 }
-                for (int i = 0; i < plan.numRuns; i++) {
+                for (int i = 0; i < plan.numRuns(); i++) {
                     LoadWorkerRaw msg = new LoadWorkerRaw(init, i, System.currentTimeMillis(), 0);
-                    
+
                     // HTTP GET Request
                     try {
                     	HttpURLConnection connection = null;
-                    	URL url = plan.path;
+                    	URL url = plan.path();
 
                     	connection = (HttpURLConnection)url.openConnection();
 
@@ -76,9 +74,9 @@ public class LoadWorker extends UntypedActor {
 	                System.out.println("Loadworker performing the actual test");
 
                     init.subscribers.parallelStream().forEach((actorRef -> actorRef.tell(msg, getSelf())));
-                    if (plan.waitBetweenMsgs > 0) {
+                    if (plan.waitBetweenMsgs() > 0) {
                         try {
-                            Thread.sleep(plan.waitBetweenMsgs);
+                            Thread.sleep(plan.waitBetweenMsgs());
                         } catch (InterruptedException e) {
                             // TODO: WTF?
                         }
