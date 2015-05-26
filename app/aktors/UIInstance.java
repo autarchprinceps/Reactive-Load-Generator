@@ -123,7 +123,7 @@ public class UIInstance extends UntypedActor {
 				case "store plan":
 					if (currentUser != null) {
 						Testplan tp = Testplan.fromJSON((JsObject) json.$bslash("testplan"));
-						tp.user_(currentUser);
+						tp.setUser(currentUser);
 						db.tell(tp, getSelf()); // TODO OK response necessary?
 					} else {
 						ws(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
@@ -132,7 +132,7 @@ public class UIInstance extends UntypedActor {
 				case "start run":
 					if (currentUser != null) {
 						Testplan testplan = Testplan.fromJSON((JsObject) json.$bslash("testplan")); // TODO replace by DB lookup
-						testplan.user_(currentUser);
+						testplan.setUser(currentUser);
 						ActorRef newRunner = as.actorOf(Props.create(
 							LoadRunner.class
 						,   as

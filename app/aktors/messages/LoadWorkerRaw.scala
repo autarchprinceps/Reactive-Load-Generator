@@ -20,60 +20,60 @@ object LoadWorkerRaw {
 }
 
 class LoadWorkerRaw(run: Testrun, iter : Int, startTime : Long, endTime : Long) {
-	private[this] var _testrun: Testrun = run // TODO async?
+	private[this] var testrun: Testrun = run // TODO async?
 
-	def testrun: Testrun = _testrun
+	def getTestrun: Testrun = testrun
 
-	def testrun_(value: Testrun): Unit = {
-	  _testrun = value
+	def setTestrun(value: Testrun): Unit = {
+	  testrun = value
 	}
 
-	private[this] var _iterOnWorker: Int = iter
+	private[this] var iterOnWorker: Int = iter
 
-	def iterOnWorker: Int = _iterOnWorker
+	def getIterOnWorker: Int = iterOnWorker
 
-	def iterOnWorker_(value: Int): Unit = {
-	  _iterOnWorker = value
+	def setIterOnWorker(value: Int): Unit = {
+	  iterOnWorker = value
 	}
 
-	private[this] var _start: Long = startTime
+	private[this] var start: Long = startTime
 
-	def start: Long = _start
+	def getStart: Long = start
 
-	def start_(value: Long): Unit = {
-	  _start = value
+	def setStart(value: Long): Unit = {
+	  start = value
 	}
 
-	private[this] var _end: Long = endTime
+	private[this] var end: Long = endTime
 
-	def end: Long = _end
+	def getEnd: Long = end
 
-	def end_(value: Long): Unit = {
-	  _end = value
+	def setEnd(value: Long): Unit = {
+	  end = value
 	}
 
 	// def this() = this(null, 0, 0, 0)
 
 	def toJSON(fullTestrun: Boolean = false): JsObject = Json.obj(
-		"iterOnWorker" -> JsNumber(_iterOnWorker)
-	,	"start" -> JsNumber(_start)
-	,	"end" -> JsNumber(_end)
-	,	"testrun" -> (if(fullTestrun) testrun.toJSON else JsString(_testrun.id.toString))
+		"iterOnWorker" -> JsNumber(iterOnWorker)
+	,	"start" -> JsNumber(start)
+	,	"end" -> JsNumber(end)
+	,	"testrun" -> (if(fullTestrun) getTestrun.toJSON else JsString(testrun.id.toString))
 	)
 
 	def canEqual(other: Any): Boolean = other.isInstanceOf[LoadWorkerRaw]
 
 	override def equals(other: Any): Boolean = other match {
 		case that: LoadWorkerRaw =>
-			_testrun.equals(that.testrun) &&
-			_iterOnWorker == that.iterOnWorker &&
-			_start == that.start &&
-			_end == that.end
+			testrun.equals(that.getTestrun) &&
+			iterOnWorker == that.getIterOnWorker &&
+			start == that.getStart &&
+			end == that.getEnd
 		case _ => false
 	}
 
 	override def hashCode(): Int = {
-		val state = Seq(_testrun, _iterOnWorker, _start, _end)
+		val state = Seq(testrun, iterOnWorker, start, end)
 		state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
 	}
 }

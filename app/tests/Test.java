@@ -63,15 +63,15 @@ public class Test {
 			// insert plans
 			for (int i = 0; i < 100; i++) {
 				Testplan tmp = new Testplan();
-				tmp.user_(users.get(random.nextInt(users.size())));
-				tmp.connectionType_(ConnectionType.values()[random.nextInt(ConnectionType.values().length)]);
-				tmp.numRuns_(1 + random.nextInt(20) + random.nextInt(20) + random.nextInt(20));
-				tmp.parallelity_(1 + random.nextInt(20));
-				tmp.id_(new ObjectId());
-				tmp.waitBeforeStart_(random.nextInt(10));
-				tmp.waitBetweenMsgs_(random.nextInt(10));
+				tmp.setUser(users.get(random.nextInt(users.size())));
+				tmp.setConnectionType(ConnectionType.values()[random.nextInt(ConnectionType.values().length)]);
+				tmp.setNumRuns(1 + random.nextInt(20) + random.nextInt(20) + random.nextInt(20));
+				tmp.setParallelity(1 + random.nextInt(20));
+				tmp.setId(new ObjectId());
+				tmp.setWaitBeforeStart(random.nextInt(10));
+				tmp.setWaitBetweenMsgs(random.nextInt(10));
 				try {
-					tmp.path_(new URL("http://example.com:1337/test/blub")); // TODO autogen?
+					tmp.setPath(new URL("http://example.com:1337/test/blub")); // TODO autogen?
 				} catch (MalformedURLException ex) {
 					ex.printStackTrace();
 					problems.add(problem(ex.getStackTrace()[0], "URL Malformed (Error in test, not code)"));
@@ -85,8 +85,8 @@ public class Test {
 			plans.stream().forEach(testplan1 -> {
 				for (int i = 0; i < 3; i++) {
 					Testrun tmp = new Testrun();
-					tmp.testplan = testplan1;
-					tmp.id = new ObjectId();
+					tmp.setTestplan(testplan1);
+					tmp.setID(new ObjectId());
 					inbox.send(db_ref, tmp);
 					runs.add(tmp);
 				}
@@ -96,16 +96,17 @@ public class Test {
 			// insert raw
 			runs.parallelStream().forEach(testrun -> {
 				List<LoadWorkerRaw> tmps = new ArrayList<>();
-				for (int i = 0; i < testrun.testplan.numRuns() * testrun.testplan.parallelity(); i++) {
+				Testplan tmptp = testrun.getTestplan();
+				for (int i = 0; i < tmptp.getNumRuns() * tmptp.getParallelity(); i++) {
 					int rstart = random.nextInt(i + 1);
 					LoadWorkerRaw tmp = new LoadWorkerRaw(
 						testrun
-						, i / testrun.testplan.parallelity()
+						, i / tmptp.getParallelity()
 						, rstart
 						, rstart + random.nextInt(i / 2 + 1)
 					);
 					inbox.send(db_ref, tmp);
-					try {Thread.sleep(testrun.testplan.waitBetweenMsgs());} catch(Exception ex) {}
+					try {Thread.sleep(tmptp.getWaitBetweenMsgs());} catch(Exception ex) {}
 					tmps.add(tmp);
 				}
 			});
@@ -134,7 +135,7 @@ public class Test {
 			plans.stream().map(testplan -> {
 				DBGetCMD result = new DBGetCMD();
 				result.t = DBGetCMD.Type.PlanByID;
-				result.id = testplan.id();
+				result.id = testplan.getId();
 				return result;
 			}).forEach(dbGetCMD -> inbox.send(db_ref, dbGetCMD));
 			// Thread.sleep(1000);
@@ -153,7 +154,7 @@ public class Test {
 			runs.stream().map(testrun -> {
 				DBGetCMD result = new DBGetCMD();
 				result.t = DBGetCMD.Type.RunByID;
-				result.id = testrun.id;
+				result.id = testrun.getID();
 				return result;
 			}).forEach(dbGetCMD -> inbox.send(db_ref, dbGetCMD));
 			// Thread.sleep(1000);
@@ -172,11 +173,11 @@ public class Test {
 			runs.stream().forEach(testrun1 -> {
 				DBGetCMD result = new DBGetCMD();
 				result.t = DBGetCMD.Type.RunRaws;
-				result.id = testrun1.id;
+				result.id = testrun1.getID();
 				inbox.send(db_ref, result);
 			});
 			// Thread.sleep(30000);
-			int totalrunraws = runs.parallelStream().map(testrun1 -> testrun1.testplan.parallelity() * testrun1.testplan.numRuns()).reduce(0, Integer::sum);
+			int totalrunraws = runs.parallelStream().map(testrun1 -> testrun1.getTestplan().getParallelity() * testrun1.getTestplan().getNumRuns()).reduce(0, Integer::sum);
 			for (int i = 0; i < totalrunraws; i++) {
 				Object tmp = inbox.receive(Duration.create(200, TimeUnit.MINUTES));
 				if(!(tmp instanceof LoadWorkerRaw)) {
@@ -201,10 +202,10 @@ public class Test {
 				Testplan tmp = (Testplan) inbox.receive(Duration.create(200, TimeUnit.MINUTES)); // TODO FIX LoadRunRaw received?
 				testplanList.add(tmp);
 			}
-			testplanList.sort((t1, t2) -> t1.id().compareTo(t2.id()));
+			testplanList.sort((t1, t2) -> t1.getId().compareTo(t2.getId()));
 			List<Testplan> copy = new ArrayList<>(plans.size());
 			Collections.copy(copy, plans);
-			copy.sort((t1, t2) -> t1.id().compareTo(t2.id()));
+			copy.sort((t1, t2) -> t1.getId().compareTo(t2.getId()));
 			if(!Arrays.deepEquals(testplanList.toArray(), copy.toArray())) {
 				problems.add(problem(
 					new Exception().getStackTrace()[0],
@@ -217,7 +218,7 @@ public class Test {
 			List<Testrun> testrunList = new ArrayList<>(runs.size());
 			plans.stream().forEach(testplan1 -> {
 				DBGetCMD dbGetCMD = new DBGetCMD();
-				dbGetCMD.id = testplan1.id();
+				dbGetCMD.id = testplan1.getId();
 				dbGetCMD.t = DBGetCMD.Type.AllRunsForPlan;
 				inbox.send(db_ref, dbGetCMD);
 			});
@@ -225,10 +226,10 @@ public class Test {
 			for (int i = 0; i < runs.size(); i++) {
 				testrunList.add((Testrun) inbox.receive(Duration.create(200, TimeUnit.MINUTES)));
 			}
-			testrunList.sort((t1, t2) -> t1.id.compareTo(t2.id));
+			testrunList.sort((t1, t2) -> t1.getID().compareTo(t2.getID()));
 			List<Testrun> rcpy = new ArrayList<>(runs.size());
 			Collections.copy(runs, rcpy);
-			rcpy.sort((t1, t2) -> t1.id.compareTo(t2.id));
+			rcpy.sort((t1, t2) -> t1.getID().compareTo(t2.getID()));
 			if(!Arrays.deepEquals(testrunList.toArray(), rcpy.toArray())) {
 				problems.add(problem(
 					new Exception().getStackTrace()[0],
@@ -241,13 +242,13 @@ public class Test {
 			runs.stream().forEach(testrun -> {
 				DBDelCMD delCMD = new DBDelCMD();
 				delCMD.t = DBDelCMD.Type.Run;
-				delCMD.id = testrun.id;
+				delCMD.id = testrun.getID();
 				inbox.send(db_ref, delCMD);
 			});
 			plans.stream().forEach(testplan -> {
 				DBDelCMD delCMD = new DBDelCMD();
 				delCMD.t = DBDelCMD.Type.Plan;
-				delCMD.id = testplan.id();
+				delCMD.id = testplan.getId();
 				inbox.send(db_ref, delCMD);
 			});
 			users.stream().forEach(user -> {

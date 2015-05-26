@@ -18,117 +18,118 @@ object Testplan {
 	@throws(classOf[MalformedURLException])
 	def fromJSON(plan: JsObject): Testplan = {
 		val result: Testplan = new Testplan
-		result.id_(if(plan.\("id").isInstanceOf[JsString])
+		result.setId(if(plan.\("id").isInstanceOf[JsString])
 			new ObjectId(JSONHelper.JsStringToString(plan.\("id")))
 		else
 			new ObjectId
 		)
 		if(plan.\("user").isInstanceOf[JsObject]) {
-			result._user = Future { User.fromJSON(plan.\("user").asInstanceOf[JsObject]) }
+			result.user = Future { User.fromJSON(plan.\("user").asInstanceOf[JsObject]) }
 		}
-		result.path_(new URL(JSONHelper.JsStringToString(plan.\("path"))))
-		result.connectionType_(ConnectionType.valueOf(JSONHelper.JsStringToString(plan.\("connectionType"))))
-		result.numRuns_((plan.\("numRuns").asInstanceOf[JsNumber]).value.intValue)
-		result.parallelity_((plan.\("parallelity").asInstanceOf[JsNumber]).value.intValue)
-		result.waitBetweenMsgs_(if (plan.\("waitBetweenMsgs").isInstanceOf[JsNumber]) (plan.\("waitBetweenMsgs").asInstanceOf[JsNumber]).value.intValue else 0)
-		result.waitBeforeStart_(if (plan.\("waitBeforeStart").isInstanceOf[JsNumber]) (plan.\("waitBeforeStart").asInstanceOf[JsNumber]).value.intValue else 0)
+		result.setPath(new URL(JSONHelper.JsStringToString(plan.\("path"))))
+		result.setConnectionType(ConnectionType.valueOf(JSONHelper.JsStringToString(plan.\("connectionType"))))
+		result.setNumRuns((plan.\("numRuns").asInstanceOf[JsNumber]).value.intValue)
+		result.setParallelity((plan.\("parallelity").asInstanceOf[JsNumber]).value.intValue)
+		result.setWaitBetweenMsgs(if (plan.\("waitBetweenMsgs").isInstanceOf[JsNumber]) (plan.\("waitBetweenMsgs").asInstanceOf[JsNumber]).value.intValue else 0)
+		result.setWaitBeforeStart(if (plan.\("waitBeforeStart").isInstanceOf[JsNumber]) (plan.\("waitBeforeStart").asInstanceOf[JsNumber]).value.intValue else 0)
 		return result
 	}
 }
 
 class Testplan {
-	override def hashCode: Int = id.hashCode
+	override def hashCode: Int = getId.hashCode
 
 	override def equals(other: Any): Boolean = other match {
-		case that: Testplan => this.id.equals(that.id)
-		case json: JsObject => new ObjectId(JSONHelper.JsStringToString((json.\("id")))).equals(this.id)
+		case that: Testplan => this.getId.equals(that.getId)
+		case json: JsObject => new ObjectId(JSONHelper.JsStringToString((json.\("id")))).equals(this.getId)
 		case _ => false
 	}
 
-	private[this] var _id: ObjectId = null
+	private[this] var id: ObjectId = null
 
-	def id: ObjectId = _id
+	def getId: ObjectId = id
 
-	def id_(value: ObjectId): Unit = {
-	  _id = value
+	def setId(value: ObjectId): Unit = {
+	  id = value
 	}
 
-	private[this] var _numRuns: Int = 0
+	private[this] var numRuns: Int = 0
 
-	def numRuns: Int = _numRuns
+	def getNumRuns: Int = numRuns
 
-	def numRuns_(value: Int): Unit = {
-	  _numRuns = value
+	def setNumRuns(value: Int): Unit = {
+	  numRuns = value
 	}
 
-	private[this] var _parallelity: Int = 0
+	private[this] var parallelity: Int = 0
 
-	def parallelity: Int = _parallelity
+	def getParallelity: Int = parallelity
 
-	def parallelity_(value: Int): Unit = {
-	  _parallelity = value
+	def setParallelity(value: Int): Unit = {
+	  parallelity = value
 	}
 
-	private[this] var _path: URL = null
+	private[this] var path: URL = null
 
-	def path: URL = _path
+	def getPath: URL = path
 
-	def path_(value: URL): Unit = {
-	  _path = value
+	def setPath(value: URL): Unit = {
+	  path = value
 	}
 
-	private[this] var _waitBetweenMsgs: Int = 0
+	private[this] var waitBetweenMsgs: Int = 0
 
-	def waitBetweenMsgs: Int = _waitBetweenMsgs
+	def getWaitBetweenMsgs: Int = waitBetweenMsgs
 
-	def waitBetweenMsgs_(value: Int): Unit = {
-	  _waitBetweenMsgs = value
+	def setWaitBetweenMsgs(value: Int): Unit = {
+	  waitBetweenMsgs = value
 	}
 
-	private[this] var _waitBeforeStart: Int = 0
+	private[this] var waitBeforeStart: Int = 0
 
-	def waitBeforeStart: Int = _waitBeforeStart
+	def getWaitBeforeStart: Int = waitBeforeStart
 
-	def waitBeforeStart_(value: Int): Unit = {
-	  _waitBeforeStart = value
+	def setWaitBeforeStart(value: Int): Unit = {
+	  waitBeforeStart = value
 	}
 
-	private[this] var _connectionType: ConnectionType = ConnectionType.HTTP
+	private[this] var connectionType: ConnectionType = ConnectionType.HTTP
 
-	def connectionType: ConnectionType = _connectionType
+	def getConnectionType: ConnectionType = connectionType
 
-	def connectionType_(value: ConnectionType): Unit = {
-	  _connectionType = value
+	def setConnectionType(value: ConnectionType): Unit = {
+	  connectionType = value
 	}
 
-	var _user: Future[User] = null
+	var user: Future[User] = null
 
-	def user: User = Await.result(_user, Duration(10, TimeUnit.MINUTES))
+	def getUser: User = Await.result(user, Duration(10, TimeUnit.MINUTES))
 
-	def user_(user : User) = _user = Future { user } // TODO better
+	def setUser(User: User) = user = Future { User } // TODO better
+	def setUser(User: Future[User]) = user = User
 
 	def toJSON: JsObject = toJSON(true)
 
 	def toJSON(withUser: Boolean): JsObject = // TODO duplicate code
 	if(withUser)
 		Json.obj(
-			"id" -> JsString(id.toString)
-		,   "path" -> JsString(path.toString)
-		,	"user" -> user.toJSON
-		,   "connectionType" -> JsString(connectionType.toString)
-		,   "numRuns" -> JsNumber(numRuns)
-		,   "parallelity" -> JsNumber(parallelity)
-		,   "waitBetweenMsgs" -> JsNumber(waitBetweenMsgs)
-		,   "waitBeforeStart" -> JsNumber(waitBeforeStart)
+			"id" -> JsString(getId.toString)
+		,   "path" -> JsString(getPath.toString)
+		,	"user" -> getUser.toJSON
+		,   "connectionType" -> JsString(getConnectionType.toString)
+		,   "numRuns" -> JsNumber(getNumRuns)
+		,   "parallelity" -> JsNumber(getParallelity)
+		,   "waitBetweenMsgs" -> JsNumber(getWaitBetweenMsgs)
+		,   "waitBeforeStart" -> JsNumber(getWaitBeforeStart)
 		)
 	else
 		Json.obj(
-			"id" -> JsString(id.toString)
-		,   "path" -> JsString(path.toString)
-		,   "connectionType" -> JsString(connectionType.toString)
-		,   "numRuns" -> JsNumber(numRuns)
-		,   "parallelity" -> JsNumber(parallelity)
-		,   "waitBetweenMsgs" -> JsNumber(waitBetweenMsgs)
-		,   "waitBeforeStart" -> JsNumber(waitBeforeStart)
+			"id" -> JsString(getId.toString)
+		,   "path" -> JsString(getPath.toString)
+		,   "connectionType" -> JsString(getConnectionType.toString)
+		,   "numRuns" -> JsNumber(getNumRuns)
+		,   "parallelity" -> JsNumber(getParallelity)
+		,   "waitBetweenMsgs" -> JsNumber(getWaitBetweenMsgs)
+		,   "waitBeforeStart" -> JsNumber(getWaitBeforeStart)
 		)
 }

@@ -35,6 +35,7 @@ class Testrun {
 	def setID(I:ObjectId) = id = I
 	def getTestplan: Testplan = Await.result(testplan, Duration(10, TimeUnit.MINUTES))
 	def setTestplan(plan: Testplan) = testplan = Future {plan} // TODO better?
+	def setTestplan(plan: Future[Testplan]) = testplan = plan
 	def getSubscribers: List[ActorRef] = subscribers
 	def setSubscribers(list : List[ActorRef]) = subscribers = list
 

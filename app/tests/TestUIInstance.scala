@@ -108,12 +108,12 @@ class TestUIInstance {
 	def testStorePlan = {
 		for(i <- 0 until 50) {
 			val tmp = new Testplan()
-			tmp.connectionType_(ConnectionType.HTTP)
-			tmp.numRuns_(i + random.nextInt(i + 1))
-			tmp.parallelity_(1 + random.nextInt(10))
-			tmp.path_(new URL("http://localhost:1301")) // TODO Server needs to be started at that address, from Java?
-			tmp.waitBeforeStart_(0)
-			tmp.waitBetweenMsgs_(0)
+			tmp.setConnectionType(ConnectionType.HTTP)
+			tmp.setNumRuns(i + random.nextInt(i + 1))
+			tmp.setParallelity(1 + random.nextInt(10))
+			tmp.setPath(new URL("http://localhost:1301")) // TODO Server needs to be started at that address, from Java?
+			tmp.setWaitBeforeStart(0)
+			tmp.setWaitBetweenMsgs(0)
 			ws(List(
 				("type", JsString("store plan"))
 			,	("testplan", tmp.toJSON(false))
@@ -152,7 +152,7 @@ class TestUIInstance {
 					if(!tmprun.testplan.equals(tmptp))
 						problems.add(Test.problem(new Exception().getStackTrace()(0), "Wrong Testplan for run: " + tmpget))
 					tmpabuf += tmprun
-					for (k <- 0 until tmptp.numRuns * tmptp.parallelity) {
+					for (k <- 0 until tmptp.getNumRuns * tmptp.getParallelity) {
 						if(!get.\("type").toString().equals("raw"))
 							problems.add(Test.problem(new Exception().getStackTrace()(0), "Not enought raws received for Testrun: " + tmprun.toJSON(true)))
 					}
@@ -166,7 +166,7 @@ class TestUIInstance {
 			val tmptp = testplans(i)
 			ws(List(
 				("type", JsString("load plan"))
-			,	("id", JsString(tmptp.id.toString))
+			,	("id", JsString(tmptp.getId.toString))
 			))
 			for(j <- 0 until (testruns(tmptp) length) + 1) {
 				var response = get
@@ -195,7 +195,7 @@ class TestUIInstance {
 					problems.add(Test.problem(new Exception().getStackTrace()(0), "Load run failed: " + recrun))
 				} else {
 					Testrun.fromJSON(recrun.\("content").asInstanceOf[JsObject]).equals(tmptrs(j))
-					for (k <- 0 until tmptp.parallelity * tmptp.numRuns) {
+					for (k <- 0 until tmptp.getParallelity * tmptp.getNumRuns) {
 						if(!get.\("type").toString().equals("raw"))
 							problems.add(Test.problem(new Exception().getStackTrace()(0), "Too few raws received: " + recrun))
 					}

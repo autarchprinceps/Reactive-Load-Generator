@@ -25,21 +25,21 @@ class DB(database : String) extends UntypedActor {
 	override def onReceive(message: Any): Unit = {
 		message match {
 			case workerraw : LoadWorkerRaw => { Future {
-				val query = MongoDBObject("_id" -> workerraw.testrun.getID)
-				val run = MongoDBObject("start" -> workerraw.start, "end" -> workerraw.end, "iter" -> workerraw.iterOnWorker)
+				val query = MongoDBObject("_id" -> workerraw.getTestrun.getID)
+				val run = MongoDBObject("start" -> workerraw.getStart, "end" -> workerraw.getEnd, "iter" -> workerraw.getIterOnWorker)
 				val update = $push("runs" -> run)
 				testruncoll.update(query, update) // TODO imperformant?
 			}}
-			case trun : Testrun => {Future { testruncoll.insert(MongoDBObject("_id" -> trun.getID, "testPlanId" -> trun.getTestplan.id)) }}
+			case trun : Testrun => {Future { testruncoll.insert(MongoDBObject("_id" -> trun.getID, "testPlanId" -> trun.getTestplan.getId)) }}
 			case tplan : Testplan => {Future { testplancoll.insert(MongoDBObject(
-				"_id" -> tplan.id
-			,	"numRuns" -> tplan.numRuns
-			,	"parallelity" -> tplan.parallelity
-			,	"path" -> tplan.path.toString
-			,	"waitBetweenMsgs" -> tplan.waitBetweenMsgs
-			,	"waitBeforeStart" -> tplan.waitBeforeStart
-			,	"connectionType" -> tplan.connectionType.toString
-			,	"user" -> tplan.user.id
+				"_id" -> tplan.getId
+			,	"numRuns" -> tplan.getNumRuns
+			,	"parallelity" -> tplan.getParallelity
+			,	"path" -> tplan.getPath.toString
+			,	"waitBetweenMsgs" -> tplan.getWaitBetweenMsgs
+			,	"waitBeforeStart" -> tplan.getWaitBeforeStart
+			,	"connectionType" -> tplan.getConnectionType.toString
+			,	"user" -> tplan.getUser.id
 			)) }}
 			case user : User => {Future { usercoll.insert(MongoDBObject( // TODO what if user exists already?
 				"_id" -> user.id
@@ -126,14 +126,14 @@ class DB(database : String) extends UntypedActor {
 		def convertPlan(document : testplancoll.T) : Testplan = {
 			// TODO utilise currentuser, when account subsystem is implemented?
 			val planObject = new Testplan()
-			planObject._user = Future { getUser(document.getAs[ObjectId]("user").get) }
-			planObject.id_(document.getAs[ObjectId]("_id").get)
-			planObject.waitBeforeStart_(document.getAs[Int]("waitBeforeStart").get)
-			planObject.waitBetweenMsgs_(document.getAs[Int]("waitBetweenMsgs").get)
-			planObject.parallelity_(document.getAs[Int]("parallelity").get)
-			planObject.numRuns_(document.getAs[Int]("numRuns").get)
-			planObject.path_(new URL(document.getAs[String]("path").get))
-			planObject.connectionType_(ConnectionType.valueOf(document.getAs[String]("connectionType").get))
+			planObject.user = Future { getUser(document.getAs[ObjectId]("user").get) }
+			planObject.setId(document.getAs[ObjectId]("_id").get)
+			planObject.setWaitBeforeStart(document.getAs[Int]("waitBeforeStart").get)
+			planObject.setWaitBetweenMsgs(document.getAs[Int]("waitBetweenMsgs").get)
+			planObject.setParallelity(document.getAs[Int]("parallelity").get)
+			planObject.setNumRuns(document.getAs[Int]("numRuns").get)
+			planObject.setPath(new URL(document.getAs[String]("path").get))
+			planObject.setConnectionType(ConnectionType.valueOf(document.getAs[String]("connectionType").get))
 			return planObject
 		}
 

@@ -34,8 +34,8 @@ public class LoadRunner extends UntypedActor {
 			parentSubscriber.tell(testrun, getSelf());
 		}
 
-        workers = new ArrayList<>(testrun.getTestplan().parallelity());
-        for(int i = 0; i < testrun.getTestplan().parallelity(); i++) {
+        workers = new ArrayList<>(testrun.getTestplan().getParallelity());
+        for(int i = 0; i < testrun.getTestplan().getParallelity(); i++) {
             workers.add(as.actorOf(Props.create(LoadWorker.class)));
         }
 	}

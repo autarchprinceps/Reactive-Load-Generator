@@ -46,18 +46,18 @@ public class Application extends Controller {
 
         //create test testplan and run
         Testplan myTestplan = new Testplan();
-        myTestplan.id_(new ObjectId());
-        myTestplan.numRuns_(1); // Per Parallel Worker
-        myTestplan.parallelity_(1);
-        myTestplan.path_(new URL("http://www.google.com"));
-        myTestplan.waitBetweenMsgs_(0);
-        myTestplan.waitBeforeStart_(0);
-        myTestplan.connectionType_(ConnectionType.HTTP);
+        myTestplan.setId(new ObjectId());
+        myTestplan.setNumRuns(1); // Per Parallel Worker
+        myTestplan.setParallelity(1);
+        myTestplan.setPath(new URL("http://www.google.com"));
+        myTestplan.setWaitBetweenMsgs(0);
+        myTestplan.setWaitBeforeStart(0);
+        myTestplan.setConnectionType(ConnectionType.HTTP);
 
         Testrun myTestrun = new Testrun();
-        myTestrun.id = new ObjectId();
-        myTestrun.testplan = myTestplan;
-        myTestrun.subscribers = new ArrayList<ActorRef>();
+        myTestrun.setID(new ObjectId());
+        myTestrun.setTestplan(myTestplan);
+        myTestrun.setSubscribers(new ArrayList<ActorRef>());
 
         //let loadworker work
         loadworker.tell(myTestrun, ActorRef.noSender());
