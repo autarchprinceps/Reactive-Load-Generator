@@ -25,12 +25,12 @@ class DB(database : String) extends UntypedActor {
 	override def onReceive(message: Any): Unit = {
 		message match {
 			case workerraw : LoadWorkerRaw => { Future {
-				val query = MongoDBObject("_id" -> workerraw.testrun.id)
+				val query = MongoDBObject("_id" -> workerraw.testrun.getID)
 				val run = MongoDBObject("start" -> workerraw.start, "end" -> workerraw.end, "iter" -> workerraw.iterOnWorker)
 				val update = $push("runs" -> run)
 				testruncoll.update(query, update) // TODO imperformant?
 			}}
-			case trun : Testrun => {Future { testruncoll.insert(MongoDBObject("_id" -> trun.id, "testPlanId" -> trun.testplan.id)) }}
+			case trun : Testrun => {Future { testruncoll.insert(MongoDBObject("_id" -> trun.getID, "testPlanId" -> trun.getTestplan.id)) }}
 			case tplan : Testplan => {Future { testplancoll.insert(MongoDBObject(
 				"_id" -> tplan.id
 			,	"numRuns" -> tplan.numRuns
@@ -105,7 +105,7 @@ class DB(database : String) extends UntypedActor {
 				simple match {
 					case "close" => {
 						client.close()
-						getContext.stop(getSelf)
+						// DEBUG deadletters getContext.stop(getSelf)
 					}
 					case _ => unhandled(message)
 				}
@@ -144,7 +144,7 @@ class DB(database : String) extends UntypedActor {
 		def convertRun(runDocument : testruncoll.T) : Testrun = {
 			val runObject = new Testrun()
 			runObject.id = runDocument.getAs[ObjectId]("_id").get
-			runObject.testplan = getPlan(runDocument.getAs[ObjectId]("testPlanId").get) // TODO async?
+			runObject.testplan = Future {getPlan(runDocument.getAs[ObjectId]("testPlanId").get)}
 			return runObject
 		}
 	}

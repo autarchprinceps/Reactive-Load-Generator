@@ -52,7 +52,7 @@ public class UIInstance extends UntypedActor {
 				websocket.tell(JSONHelper.objectResponse("testrun", testrun.toJSON()), getSelf());
 				DBGetCMD dbGetCMD = new DBGetCMD();
 				dbGetCMD.t = DBGetCMD.Type.RunRaws;
-				dbGetCMD.id = testrun.id;
+				dbGetCMD.id = testrun.getID();
 				db.tell(dbGetCMD, getSelf());
 			} else if(message instanceof LoadWorkerRaw) {
 				websocket.tell(JSONHelper.objectResponse(
@@ -218,6 +218,7 @@ public class UIInstance extends UntypedActor {
 
 	@Override
 	public void postStop() throws Exception {
+		// TODO How is UIInstance closed? WebSocket.onclose?
 		db.tell("close", getSelf());
 	}
 }

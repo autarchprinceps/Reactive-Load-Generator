@@ -26,16 +26,16 @@ public class LoadRunner extends UntypedActor {
 		}
 
         testrun = new Testrun();
-        testrun.id = new ObjectId();
-        testrun.testplan = testplan;
-        testrun.subscribers = subscribers;
+        testrun.setID(new ObjectId());
+        testrun.setTestplan(testplan);
+        testrun.setSubscribers(subscribers);
         db.tell(testrun, getSelf());
 		for(ActorRef parentSubscriber : parentSubscribers) {
 			parentSubscriber.tell(testrun, getSelf());
 		}
 
-        workers = new ArrayList<>(testrun.testplan.parallelity());
-        for(int i = 0; i < testrun.testplan.parallelity(); i++) {
+        workers = new ArrayList<>(testrun.getTestplan().parallelity());
+        for(int i = 0; i < testrun.getTestplan().parallelity(); i++) {
             workers.add(as.actorOf(Props.create(LoadWorker.class)));
         }
 	}
@@ -55,7 +55,7 @@ public class LoadRunner extends UntypedActor {
                     break;
                 case Stop:
                     workers.parallelStream().forEach((x) -> x.tell(WorkerCMD.Stop, getSelf()));
-                    getContext().stop(getSelf());
+                    // DEBUG deadletters getContext().stop(getSelf());
                     break;
             }
         } else {

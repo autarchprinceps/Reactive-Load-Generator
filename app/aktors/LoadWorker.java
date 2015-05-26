@@ -29,7 +29,7 @@ public class LoadWorker extends UntypedActor {
     public void onReceive(Object message) {
         if(message instanceof Testrun) {
             Testrun init = (Testrun)message;
-            Testplan plan = init.testplan;
+            Testplan plan = init.getTestplan();
             t = new Thread(() -> {
                 if (plan.waitBeforeStart() > 0) {
                     try {
@@ -73,7 +73,7 @@ public class LoadWorker extends UntypedActor {
                     msg.end_(System.currentTimeMillis());
 	                System.out.println("Loadworker performing the actual test");
 
-                    init.subscribers.parallelStream().forEach((actorRef -> actorRef.tell(msg, getSelf())));
+                    init.getSubscribers().parallelStream().forEach((actorRef -> actorRef.tell(msg, getSelf())));
                     if (plan.waitBetweenMsgs() > 0) {
                         try {
                             Thread.sleep(plan.waitBetweenMsgs());
@@ -89,7 +89,7 @@ public class LoadWorker extends UntypedActor {
             WorkerCMD cmd = (WorkerCMD)message;
             if(cmd == WorkerCMD.Stop) {
                 t.stop();
-                getContext().stop(getSelf()); // TODO works? else self().tell(PoisonPill.getInstance(), self());
+                // DEBUG deadletters getContext().stop(getSelf()); // TODO works? else self().tell(PoisonPill.getInstance(), self());
             }
         } else {
             unhandled(message);

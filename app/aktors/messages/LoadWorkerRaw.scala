@@ -20,7 +20,7 @@ object LoadWorkerRaw {
 }
 
 class LoadWorkerRaw(run: Testrun, iter : Int, startTime : Long, endTime : Long) {
-	private[this] var _testrun: Testrun = run
+	private[this] var _testrun: Testrun = run // TODO async?
 
 	def testrun: Testrun = _testrun
 
