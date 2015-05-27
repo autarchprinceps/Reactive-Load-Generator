@@ -24,7 +24,7 @@ public class Test {
 	}
 
 	public static List<String> dbTest() {
-		System.out.println("dbTest");
+		System.out.println("Test.java: dbTest");
 		List<String> problems = new LinkedList<>();
 		try {
 			Random random = new Random();
@@ -269,6 +269,7 @@ public class Test {
 	}
 
 	public static List<String> testUII() {
+		System.out.println("Test.java: testUII");
 		return new TestUIInstance().apply();
-	}
+	} // TODO does nothing !
 }

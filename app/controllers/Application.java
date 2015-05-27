@@ -85,10 +85,14 @@ public class Application extends Controller {
 			    List<String> problems;
 			    switch(message) {
 				    case "db":
+					    out.write("DBTest started");
 					    problems = Test.dbTest();
+					    out.write("DBTest finished");
 					    break;
 				    case "uii":
+					    out.write("UIITest started");
 					    problems = Test.testUII();
+					    out.write("UIITest finished");
 					    break;
 				    default:
 					    out.write("Invalid test");

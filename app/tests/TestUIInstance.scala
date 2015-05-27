@@ -9,15 +9,16 @@ import aktors.messages.ConnectionType
 import aktors.messages.{DBDelCMD, Testplan, Testrun}
 import aktors.{DB, UIInstance}
 import com.typesafe.config.ConfigFactory
-import play.api.libs.json.{JsObject, JsString, JsValue}
+import play.api.libs.json.{Json, JsObject, JsString, JsValue}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.Duration
 import scala.util.Random
 
+
 /**
- * Created by autarch on 12.05.15.
+ * Created by Patrick Robinson on 12.05.15.
  */
 class TestUIInstance {
 	val as: ActorSystem = ActorSystem.create(
@@ -33,24 +34,33 @@ class TestUIInstance {
 	val random = new Random
 	val problems = new util.LinkedList[String]()
 
-	def ws(what: Seq[(String, JsValue)]) = inbox.send(uii, JsObject(what))
+	def ws(what: Seq[(String, JsValue)]) = inbox.send(uii, JsObject(what).toString)
 
 	def answerCheckType(typeToCheck : String) : Boolean = {
 		val ans = get
 		return ans.isInstanceOf[JsObject] && ans.asInstanceOf[JsObject].\("type").toString().equals(typeToCheck)
 	}
 
-	def get : JsObject = inbox.receive(Duration.create(1, TimeUnit.MINUTES)).asInstanceOf[JsObject]
+	def get : JsObject = Json.parse(inbox.receive(Duration.create(10, TimeUnit.MINUTES)).asInstanceOf[String]).asInstanceOf[JsObject]
 
 	def apply() : util.List[String] = {
+		println("TestUIInstance start")
 		testNotAuth
+		println("TestUIInstance testNotAuth")
 		testRegLogin
+		println("TestUIInstance testRegLogin")
 		testStorePlan
+		println("TestUIInstance testStorePlan")
 		testAllPlans
+		println("TestUIInstance testAllPlans")
 		testRun
+		println("TestUIInstance testRun")
 		testLoadPlan
+		println("TestUIInstance testLoadPlan")
 		testLoadRun
+		println("TestUIInstance testLoadRun")
 		drop
+		println("TestUIInstance drop")
 		return problems
 	}
 
