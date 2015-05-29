@@ -28,9 +28,9 @@ class DB(database : String = "loadgen") extends UntypedActor {
 				val update = $push("runs" -> run)
 				testruncoll.update(query, update) // TODO imperformant?
 			}}
-			case trun : Testrun => {Future { testruncoll.insert(MongoDBObject("_id" -> trun.getID, "testPlanId" -> trun.getTestplan.getId)) }}
+			case trun : Testrun => {Future { testruncoll.insert(MongoDBObject("_id" -> trun.getID, "testPlanId" -> trun.getTestplan.getID)) }}
 			case tplan : Testplan => {Future { testplancoll.insert(MongoDBObject(
-				"_id" -> tplan.getId
+				"_id" -> tplan.getID
 			,	"numRuns" -> tplan.getNumRuns
 			,	"parallelity" -> tplan.getParallelity
 			,	"path" -> tplan.getPath.toString
@@ -130,7 +130,7 @@ class DB(database : String = "loadgen") extends UntypedActor {
 			Parallelity = document.getAs[Int]("parallelity").get,
 			NumRuns = document.getAs[Int]("numRuns").get,
 			Path = new URL(document.getAs[String]("path").get),
-			ConnectionType = ConnectionType.valueOf(document.getAs[String]("connectionType").get)
+			ConType = ConnectionType.valueOf(document.getAs[String]("connectionType").get)
 		)
 
 		def getPlan(id : ObjectId) : Testplan = convertPlan(testplancoll.findOneByID(id).get)
@@ -138,8 +138,8 @@ class DB(database : String = "loadgen") extends UntypedActor {
 		def getRun(id : ObjectId) : Testrun = convertRun(testruncoll.findOneByID(id).get)
 
 		def convertRun(runDocument : testruncoll.T) : Testrun = new Testrun(
-				id = runDocument.getAs[ObjectId]("_id").get,
-				testplan = Future {getPlan(runDocument.getAs[ObjectId]("testPlanId").get)}
+				ID = runDocument.getAs[ObjectId]("_id").get,
+				Testplan = Future {getPlan(runDocument.getAs[ObjectId]("testPlanId").get)}
 		)
 	}
 }

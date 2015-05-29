@@ -135,7 +135,7 @@ class TestUIInstance {
 		for(k <- 0 until 50) {
 			val ttp = new Testplan(
 				ID = new ObjectId
-			,   ConnectionType = ConnectionType.HTTP
+			,   ConType = ConnectionType.HTTP
 			,   NumRuns = k + random.nextInt(k + 1)
 			,   Parallelity = random.nextInt(10) + 1
 			,   Path = new URL("http://localhost:1301")
@@ -192,7 +192,7 @@ class TestUIInstance {
 			val tmptp = testplans(i)
 			ws(List(
 				("type", JsString("load plan"))
-			,	("id", JsString(tmptp.getId.toString))
+			,	("id", JsString(tmptp.getID.toString))
 			))
 			for(j <- 0 until (testruns(tmptp) length) + 1) {
 				val response = get

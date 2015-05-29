@@ -10,8 +10,6 @@ import com.typesafe.config.ConfigFactory;
 import org.bson.types.ObjectId;
 import scala.concurrent.duration.Duration;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -117,13 +115,13 @@ public class Test {
 			users.stream().map((user -> {
 				DBGetCMD result = new DBGetCMD();
 				result.t = DBGetCMD.Type.UserByID;
-				result.id = user.getId();
+				result.id = user.getID();
 				return result;
 			})).forEach(dbGetCMD -> inbox.send(db_ref, dbGetCMD));
 			// Thread.sleep(30000);
 			for (int i = 0; i < users.size(); i++) {
 				User u = (User) inbox.receive(Duration.create(200, TimeUnit.MINUTES));
-				if(users.stream().filter(user -> user.getId().equals(u.getId()) && user.getName().equals(u.getName()) && u.check(user.getPassword())).count() != 1) {
+				if(users.stream().filter(user -> user.getID().equals(u.getID()) && user.getName().equals(u.getName()) && u.check(user.getPassword())).count() != 1) {
 					problems.add(problem(
 						new Exception().getStackTrace()[0],
 						"A user doesn't match: " + u.toJSON(true).toString()
@@ -136,7 +134,7 @@ public class Test {
 			plans.stream().map(testplan -> {
 				DBGetCMD result = new DBGetCMD();
 				result.t = DBGetCMD.Type.PlanByID;
-				result.id = testplan.getId();
+				result.id = testplan.getID();
 				return result;
 			}).forEach(dbGetCMD -> inbox.send(db_ref, dbGetCMD));
 			// Thread.sleep(1000);
@@ -195,7 +193,7 @@ public class Test {
 			users.stream().map(user -> {
 				DBGetCMD result = new DBGetCMD();
 				result.t = DBGetCMD.Type.AllPlansForUser;
-				result.id = user.getId();
+				result.id = user.getID();
 				return result;
 			}).forEach(dbGetCMD -> inbox.send(db_ref, dbGetCMD));
 			// Thread.sleep(30000);
@@ -203,10 +201,10 @@ public class Test {
 				Testplan tmp = (Testplan) inbox.receive(Duration.create(200, TimeUnit.MINUTES)); // TODO FIX LoadRunRaw received?
 				testplanList.add(tmp);
 			}
-			testplanList.sort((t1, t2) -> t1.getId().compareTo(t2.getId()));
+			testplanList.sort((t1, t2) -> t1.getID().compareTo(t2.getID()));
 			List<Testplan> copy = new ArrayList<>(plans.size());
 			Collections.copy(copy, plans);
-			copy.sort((t1, t2) -> t1.getId().compareTo(t2.getId()));
+			copy.sort((t1, t2) -> t1.getID().compareTo(t2.getID()));
 			if(!Arrays.deepEquals(testplanList.toArray(), copy.toArray())) {
 				problems.add(problem(
 					new Exception().getStackTrace()[0],
@@ -219,7 +217,7 @@ public class Test {
 			List<Testrun> testrunList = new ArrayList<>(runs.size());
 			plans.stream().forEach(testplan1 -> {
 				DBGetCMD dbGetCMD = new DBGetCMD();
-				dbGetCMD.id = testplan1.getId();
+				dbGetCMD.id = testplan1.getID();
 				dbGetCMD.t = DBGetCMD.Type.AllRunsForPlan;
 				inbox.send(db_ref, dbGetCMD);
 			});
@@ -249,13 +247,13 @@ public class Test {
 			plans.stream().forEach(testplan -> {
 				DBDelCMD delCMD = new DBDelCMD();
 				delCMD.t = DBDelCMD.Type.Plan;
-				delCMD.id = testplan.getId();
+				delCMD.id = testplan.getID();
 				inbox.send(db_ref, delCMD);
 			});
 			users.stream().forEach(user -> {
 				DBDelCMD delCMD = new DBDelCMD();
 				delCMD.t = DBDelCMD.Type.User;
-				delCMD.id = user.getId();
+				delCMD.id = user.getID();
 				inbox.send(db_ref, delCMD);
 			});
 			System.out.println("dbTest deleted, starting close");

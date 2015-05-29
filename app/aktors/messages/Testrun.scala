@@ -20,36 +20,35 @@ import scala.concurrent.ExecutionContext.Implicits.global
 object Testrun {
 	@throws(classOf[MalformedURLException])
 	def fromJSON(run: JsObject): Testrun = new Testrun(
-		id = new ObjectId(JSONHelper.JsStringToString(run.\("id")))
-	,   testplan = Future {if(run.\("testplan").isInstanceOf[JsObject]) Testplan.fromJSON(run.\("testplan").asInstanceOf[JsObject]) else null}
+		ID = new ObjectId(JSONHelper.JsStringToString(run.\("id")))
+	,   Testplan = Future {if(run.\("testplan").isInstanceOf[JsObject]) Testplan.fromJSON(run.\("testplan").asInstanceOf[JsObject]) else null}
 	)
 }
 
-class Testrun(id: ObjectId = new ObjectId, subscribers: List[ActorRef] = new util.ArrayList[ActorRef](), testplan: Future[Testplan] = null) {
-	var _testplan: Future[Testplan] = testplan
+class Testrun(ID: ObjectId = new ObjectId, Subscribers: List[ActorRef] = new util.ArrayList[ActorRef](), Testplan: Future[Testplan] = null) {
+	var _testplan: Future[Testplan] = Testplan
 
-	def getID: ObjectId = id
-	def getTestplan: Testplan = Await.result(testplan, Duration(10, TimeUnit.MINUTES))
+	def getID: ObjectId = ID
+	def getTestplan: Testplan = Await.result(Testplan, Duration(10, TimeUnit.MINUTES))
 	def setTestplan(plan: Testplan) = _testplan = Future {plan} // TODO better?
 	def setTestplan(plan: Future[Testplan]) = _testplan = plan
-	def getSubscribers: List[ActorRef] = subscribers
+	def getSubscribers: List[ActorRef] = Subscribers
 
 	def toJSON: JsObject = toJSON(true)
-
 	def toJSON(withPlan: Boolean): JsObject =
 		if(withPlan) // TODO better?
 			Json.obj(
-				"id" -> JsString(id.toString)
+				"id" -> JsString(ID.toString)
 			,   "testplan" -> getTestplan.toJSON
 			)
 		else
-			Json.obj("id" -> JsString(id.toString))
+			Json.obj("id" -> JsString(ID.toString))
 
-	override def hashCode: Int = id.hashCode
+	override def hashCode: Int = ID.hashCode
 
 	override def equals(other: Any): Boolean = other match {
-		case that: Testrun => this.id.equals(that.id)
-		case json: JsObject => new ObjectId(JSONHelper.JsStringToString((json.\("id")))).equals(this.id)
+		case that: Testrun => getID.equals(that.getID)
+		case json: JsObject => new ObjectId(JSONHelper.JsStringToString((json.\("id")))).equals(this.ID)
 		case _ => false
 	}
 }

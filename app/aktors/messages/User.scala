@@ -18,23 +18,23 @@ object User {
 	)
 }
 
-class User(id: ObjectId = new ObjectId(), name: String, password: String = "") {
-	override def hashCode: Int = id.hashCode
+class User(ID: ObjectId = new ObjectId(), Name: String, Password: String = "") {
+	override def hashCode: Int = ID.hashCode
 
 	override def equals(other: Any): Boolean = other match {
-		case user : User => user.id.equals(id)
-		case json : JsObject => new ObjectId(JSONHelper.JsStringToString((json.\("id")))).equals(id)
+		case user : User => user.getId.equals(getId)
+		case json : JsObject => new ObjectId(JSONHelper.JsStringToString((json.\("id")))).equals(getId)
 		case _ => false
 	}
 
-	def getName: String = name
-	def getId: ObjectId = id
+	def getName: String = Name
+	def getId: ObjectId = ID
 
 	private var _password: String = null
 	def check(passwordCandidate: String): Boolean = _password == passwordCandidate
 	def getPassword: String = _password
 	def changePassword(oldPw: String, newPw: String): Boolean = {
-		if (oldPw == password) {
+		if (oldPw == Password) {
 			_password = newPw
 			return true
 		}
@@ -46,13 +46,13 @@ class User(id: ObjectId = new ObjectId(), name: String, password: String = "") {
 	def toJSON: JsObject = toJSON(false)
 	def toJSON(withPw: Boolean): JsObject = if(withPw)
 		Json.obj(
-			"id" -> JsString(id.toString)
-		,   "name" -> JsString(name)
-		,   "password" -> JsString(password)
+			"id" -> JsString(ID.toString)
+		,   "name" -> JsString(Name)
+		,   "password" -> JsString(Password)
 		)
 	else
 		Json.obj(
-			"id" -> JsString(id.toString)
-		,   "name" -> JsString(name)
+			"id" -> JsString(ID.toString)
+		,   "name" -> JsString(Name)
 		)
 }

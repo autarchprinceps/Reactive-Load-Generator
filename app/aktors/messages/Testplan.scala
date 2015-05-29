@@ -19,7 +19,7 @@ object Testplan {
 	def fromJSON(plan: JsObject): Testplan = new Testplan(
 		ID = if(plan.\("id").isInstanceOf[JsString]) new ObjectId(JSONHelper.JsStringToString(plan.\("id"))) else new ObjectId,
 		Path = new URL(JSONHelper.JsStringToString(plan.\("path"))),
-		ConnectionType =ConnectionType.valueOf(JSONHelper.JsStringToString(plan.\("connectionType"))),
+		ConType =ConnectionType.valueOf(JSONHelper.JsStringToString(plan.\("connectionType"))),
 		NumRuns = (plan.\("numRuns").asInstanceOf[JsNumber]).value.intValue,
 		Parallelity = (plan.\("parallelity").asInstanceOf[JsNumber]).value.intValue,
 		WaitBetweenMsgs = if (plan.\("waitBetweenMsgs").isInstanceOf[JsNumber]) (plan.\("waitBetweenMsgs").asInstanceOf[JsNumber]).value.intValue else 0,
@@ -35,24 +35,24 @@ class Testplan(
 	Path : URL,
 	WaitBetweenMsgs : Int = 0,
     WaitBeforeStart : Int = 0,
-	ConnectionType : ConnectionType = ConnectionType.HTTP,
+	ConType : ConnectionType = ConnectionType.HTTP,
 	User : Future[User] = Future {null}
 ) {
-	override def hashCode: Int = getId.hashCode
+	override def hashCode: Int = getID.hashCode
 
 	override def equals(other: Any): Boolean = other match {
-		case that: Testplan => this.getId.equals(that.getId)
-		case json: JsObject => new ObjectId(JSONHelper.JsStringToString((json.\("id")))).equals(this.getId)
+		case that: Testplan => this.getID.equals(that.getID)
+		case json: JsObject => new ObjectId(JSONHelper.JsStringToString((json.\("id")))).equals(this.getID)
 		case _ => false
 	}
 
-	def getId: ObjectId = ID
+	def getID: ObjectId = ID
 	def getNumRuns: Int = NumRuns
 	def getParallelity: Int = Parallelity
 	def getPath: URL = Path
 	def getWaitBetweenMsgs: Int = WaitBetweenMsgs
 	def getWaitBeforeStart: Int = WaitBeforeStart
-	def getConnectionType: ConnectionType = ConnectionType
+	def getConnectionType: ConnectionType = ConType
 
 	var user: Future[User] = User
 	def getUser: User = Await.result(user, Duration(10, TimeUnit.MINUTES))
@@ -63,7 +63,7 @@ class Testplan(
 	def toJSON(withUser: Boolean): JsObject = // TODO duplicate code
 	if(withUser)
 		Json.obj(
-			"id" -> JsString(getId.toString)
+			"id" -> JsString(getID.toString)
 		,   "path" -> JsString(getPath.toString)
 		,	"user" -> getUser.toJSON
 		,   "connectionType" -> JsString(getConnectionType.toString)
@@ -74,7 +74,7 @@ class Testplan(
 		)
 	else
 		Json.obj(
-			"id" -> JsString(getId.toString)
+			"id" -> JsString(getID.toString)
 		,   "path" -> JsString(getPath.toString)
 		,   "connectionType" -> JsString(getConnectionType.toString)
 		,   "numRuns" -> JsNumber(getNumRuns)
