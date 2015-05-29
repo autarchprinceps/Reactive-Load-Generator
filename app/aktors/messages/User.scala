@@ -22,13 +22,13 @@ class User(ID: ObjectId = new ObjectId(), Name: String, Password: String = "") {
 	override def hashCode: Int = ID.hashCode
 
 	override def equals(other: Any): Boolean = other match {
-		case user : User => user.getId.equals(getId)
-		case json : JsObject => new ObjectId(JSONHelper.JsStringToString((json.\("id")))).equals(getId)
+		case user : User => user.getID.equals(getID)
+		case json : JsObject => new ObjectId(JSONHelper.JsStringToString((json.\("id")))).equals(getID)
 		case _ => false
 	}
 
 	def getName: String = Name
-	def getId: ObjectId = ID
+	def getID: ObjectId = ID
 
 	private var _password: String = null
 	def check(passwordCandidate: String): Boolean = _password == passwordCandidate

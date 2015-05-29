@@ -37,10 +37,10 @@ class DB(database : String = "loadgen") extends UntypedActor {
 			,	"waitBetweenMsgs" -> tplan.getWaitBetweenMsgs
 			,	"waitBeforeStart" -> tplan.getWaitBeforeStart
 			,	"connectionType" -> tplan.getConnectionType.toString
-			,	"user" -> tplan.getUser.getId
+			,	"user" -> tplan.getUser.getID
 			)) }}
 			case user : User => {Future { usercoll.insert(MongoDBObject( // TODO what if user exists already?
-				"_id" -> user.getId
+				"_id" -> user.getID
 			,	"name" -> user.getName
 			,   "password" -> user.getPassword
 			)) }}
