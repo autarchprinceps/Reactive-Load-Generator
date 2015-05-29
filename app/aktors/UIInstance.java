@@ -19,12 +19,6 @@ import java.util.List;
  */
 public class UIInstance extends UntypedActor {
 	private class RunnerConnector extends UntypedActor {
-		public RunnerConnector(Testplan plan) {
-			this.testplan = plan;
-		}
-
-		private Testplan testplan;
-
 		@Override
 		public void onReceive(Object message) throws Exception {
 			if(message instanceof LoadWorkerRaw) {
@@ -43,12 +37,11 @@ public class UIInstance extends UntypedActor {
 		}
 	}
 	private class RunLoader extends UntypedActor {
-		private Testrun testrun;
 
 		@Override
 		public void onReceive(Object message) throws Exception {
 			if(message instanceof Testrun) {
-				testrun = (Testrun)message;
+				Testrun testrun = (Testrun)message;
 				websocket.tell(JSONHelper.objectResponse("testrun", testrun.toJSON()), getSelf());
 				DBGetCMD dbGetCMD = new DBGetCMD();
 				dbGetCMD.t = DBGetCMD.Type.RunRaws;
@@ -150,7 +143,7 @@ public class UIInstance extends UntypedActor {
 						,   as
 						,   testplan
 						,   db
-						,   as.actorOf(Props.create(RunnerConnector.class, testplan))
+						,   as.actorOf(Props.create(RunnerConnector.class))
 						));
 						newRunner.tell(RunnerCMD.Start, getSelf()); // TODO seperate start necessary? depends on UI
 						running.add(newRunner);
