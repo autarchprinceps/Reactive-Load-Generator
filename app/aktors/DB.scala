@@ -12,14 +12,12 @@ import scala.concurrent.Future
 /**
  * Created by Patrick Robinson on 02.05.15.
  */
-class DB(database : String) extends UntypedActor {
+class DB(database : String = "loadgen") extends UntypedActor {
 	val client = MongoClient() // TODO multiple Verbindungen?
 	val db = client(database)
 	val testruncoll = db("testrun")
 	val testplancoll = db("testplan")
 	val usercoll = db("user")
-
-	def this() = this("loadgen")
 
 	@throws[Exception](classOf[Exception])
 	override def onReceive(message: Any): Unit = {
@@ -39,11 +37,11 @@ class DB(database : String) extends UntypedActor {
 			,	"waitBetweenMsgs" -> tplan.getWaitBetweenMsgs
 			,	"waitBeforeStart" -> tplan.getWaitBeforeStart
 			,	"connectionType" -> tplan.getConnectionType.toString
-			,	"user" -> tplan.getUser.id
+			,	"user" -> tplan.getUser.getId
 			)) }}
 			case user : User => {Future { usercoll.insert(MongoDBObject( // TODO what if user exists already?
-				"_id" -> user.id
-			,	"name" -> user.name
+				"_id" -> user.getId
+			,	"name" -> user.getName
 			,   "password" -> user.getPassword
 			)) }}
 			case getCMD : DBGetCMD => {
@@ -139,11 +137,9 @@ class DB(database : String) extends UntypedActor {
 
 		def getRun(id : ObjectId) : Testrun = convertRun(testruncoll.findOneByID(id).get)
 
-		def convertRun(runDocument : testruncoll.T) : Testrun = {
-			val runObject = new Testrun()
-			runObject.id = runDocument.getAs[ObjectId]("_id").get
-			runObject.testplan = Future {getPlan(runDocument.getAs[ObjectId]("testPlanId").get)}
-			return runObject
-		}
+		def convertRun(runDocument : testruncoll.T) : Testrun = new Testrun(
+				id = runDocument.getAs[ObjectId]("_id").get,
+				testplan = Future {getPlan(runDocument.getAs[ObjectId]("testPlanId").get)}
+		)
 	}
 }

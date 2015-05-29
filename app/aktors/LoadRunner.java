@@ -25,10 +25,8 @@ public class LoadRunner extends UntypedActor {
 			subscribers.add(a);
 		}
 
-        testrun = new Testrun();
-        testrun.setID(new ObjectId());
-        testrun.setTestplan(testplan);
-        testrun.setSubscribers(subscribers);
+        testrun = new Testrun(new ObjectId(), subscribers, null);
+		testrun.setTestplan(testplan);
         db.tell(testrun, getSelf());
 		for(ActorRef parentSubscriber : parentSubscribers) {
 			parentSubscriber.tell(testrun, getSelf());

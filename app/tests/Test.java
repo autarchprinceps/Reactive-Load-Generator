@@ -86,9 +86,8 @@ public class Test {
 			// insert runs
 			plans.stream().forEach(testplan1 -> {
 				for (int i = 0; i < 3; i++) {
-					Testrun tmp = new Testrun();
+					Testrun tmp = new Testrun(new ObjectId(), null, null);
 					tmp.setTestplan(testplan1);
-					tmp.setID(new ObjectId());
 					inbox.send(db_ref, tmp);
 					runs.add(tmp);
 				}
@@ -118,13 +117,13 @@ public class Test {
 			users.stream().map((user -> {
 				DBGetCMD result = new DBGetCMD();
 				result.t = DBGetCMD.Type.UserByID;
-				result.id = user.id;
+				result.id = user.getId();
 				return result;
 			})).forEach(dbGetCMD -> inbox.send(db_ref, dbGetCMD));
 			// Thread.sleep(30000);
 			for (int i = 0; i < users.size(); i++) {
 				User u = (User) inbox.receive(Duration.create(200, TimeUnit.MINUTES));
-				if(users.stream().filter(user -> user.id == u.id && user.name == u.name && u.check(user.getPassword())).count() != 1) {
+				if(users.stream().filter(user -> user.getId().equals(u.getId()) && user.getName().equals(u.getName()) && u.check(user.getPassword())).count() != 1) {
 					problems.add(problem(
 						new Exception().getStackTrace()[0],
 						"A user doesn't match: " + u.toJSON(true).toString()
@@ -196,7 +195,7 @@ public class Test {
 			users.stream().map(user -> {
 				DBGetCMD result = new DBGetCMD();
 				result.t = DBGetCMD.Type.AllPlansForUser;
-				result.id = user.id;
+				result.id = user.getId();
 				return result;
 			}).forEach(dbGetCMD -> inbox.send(db_ref, dbGetCMD));
 			// Thread.sleep(30000);
@@ -256,7 +255,7 @@ public class Test {
 			users.stream().forEach(user -> {
 				DBDelCMD delCMD = new DBDelCMD();
 				delCMD.t = DBDelCMD.Type.User;
-				delCMD.id = user.id;
+				delCMD.id = user.getId();
 				inbox.send(db_ref, delCMD);
 			});
 			System.out.println("dbTest deleted, starting close");

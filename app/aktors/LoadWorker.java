@@ -35,7 +35,6 @@ public class LoadWorker extends UntypedActor {
                     try {
                         Thread.sleep(plan.getWaitBeforeStart());
                     } catch (InterruptedException e) {
-                        // TODO: WTF?
                     }
                 }
                 for (int i = 0; i < plan.getNumRuns(); i++) {
@@ -79,7 +78,6 @@ public class LoadWorker extends UntypedActor {
                         try {
                             Thread.sleep(plan.getWaitBetweenMsgs());
                         } catch (InterruptedException e) {
-                            // TODO: WTF?
                         }
                     }
                 }
@@ -90,7 +88,7 @@ public class LoadWorker extends UntypedActor {
             WorkerCMD cmd = (WorkerCMD)message;
             if(cmd == WorkerCMD.Stop) {
                 t.stop();
-                // DEBUG deadletters getContext().stop(getSelf()); // TODO works? else self().tell(PoisonPill.getInstance(), self());
+                // DEBUG deadletters getContext().stop(getSelf());
             }
         } else {
             unhandled(message);

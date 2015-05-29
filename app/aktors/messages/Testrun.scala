@@ -1,5 +1,6 @@
 package aktors.messages
 
+import java.util
 import java.util.concurrent.TimeUnit
 
 import akka.actor.ActorRef
@@ -18,26 +19,20 @@ import scala.concurrent.ExecutionContext.Implicits.global
  */
 object Testrun {
 	@throws(classOf[MalformedURLException])
-	def fromJSON(run: JsObject): Testrun = {
-		val result: Testrun = new Testrun
-		result.id = new ObjectId(JSONHelper.JsStringToString(run.\("id")))
-		result.testplan = Future {if(run.\("testplan").isInstanceOf[JsObject]) Testplan.fromJSON(run.\("testplan").asInstanceOf[JsObject]) else null}
-		return result
-	}
+	def fromJSON(run: JsObject): Testrun = new Testrun(
+		id = new ObjectId(JSONHelper.JsStringToString(run.\("id")))
+	,   testplan = Future {if(run.\("testplan").isInstanceOf[JsObject]) Testplan.fromJSON(run.\("testplan").asInstanceOf[JsObject]) else null}
+	)
 }
 
-class Testrun {
-	var id: ObjectId = null
-	var testplan: Future[Testplan] = null
-	var subscribers: List[ActorRef] = null
+class Testrun(id: ObjectId = new ObjectId, subscribers: List[ActorRef] = new util.ArrayList[ActorRef](), testplan: Future[Testplan] = null) {
+	var _testplan: Future[Testplan] = testplan
 
 	def getID: ObjectId = id
-	def setID(I:ObjectId) = id = I
 	def getTestplan: Testplan = Await.result(testplan, Duration(10, TimeUnit.MINUTES))
-	def setTestplan(plan: Testplan) = testplan = Future {plan} // TODO better?
-	def setTestplan(plan: Future[Testplan]) = testplan = plan
+	def setTestplan(plan: Testplan) = _testplan = Future {plan} // TODO better?
+	def setTestplan(plan: Future[Testplan]) = _testplan = plan
 	def getSubscribers: List[ActorRef] = subscribers
-	def setSubscribers(list : List[ActorRef]) = subscribers = list
 
 	def toJSON: JsObject = toJSON(true)
 

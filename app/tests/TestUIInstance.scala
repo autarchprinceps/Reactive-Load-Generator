@@ -133,12 +133,13 @@ class TestUIInstance {
 
 	def testStorePlan = {
 		for(k <- 0 until 50) {
-			val ttp = new Testplan
-			ttp.setId(new ObjectId)
-			ttp.setConnectionType(ConnectionType.HTTP)
-			ttp.setNumRuns(k + random.nextInt(k + 1))
-			ttp.setParallelity(random.nextInt(10) + 1)
-			ttp.setPath(new URL("http://localhost:1301"))
+			val ttp = new Testplan(
+				ID = new ObjectId
+			,   ConnectionType = ConnectionType.HTTP
+			,   NumRuns = k + random.nextInt(k + 1)
+			,   Parallelity = random.nextInt(10) + 1
+			,   Path = new URL("http://localhost:1301")
+			)
 			ws(List(
 				("type", JsString("store plan"))
 			,   ("testplan", ttp.toJSON(false))
@@ -173,7 +174,7 @@ class TestUIInstance {
 					problems.add(Test.problem(new Exception().getStackTrace()(0), "run not started: " + tmpget))
 				} else {
 					val tmprun = Testrun.fromJSON(tmpget.\("content").asInstanceOf[JsObject])
-					if(!tmprun.testplan.equals(tmptp))
+					if(!tmprun.getTestplan.equals(tmptp))
 						problems.add(Test.problem(new Exception().getStackTrace()(0), "Wrong Testplan for run: " + tmpget))
 					tmpabuf += tmprun
 					for (k <- 0 until tmptp.getNumRuns * tmptp.getParallelity) {
@@ -213,7 +214,7 @@ class TestUIInstance {
 			for(j <- 0 until (tmptrs length)) {
 				ws(List(
 					("type", JsString("load run"))
-				,	("id", JsString(tmptrs(j).id.toString))
+				,	("id", JsString(tmptrs(j).getID.toString))
 				))
 				val recrun = get
 				if(!recrun.\("type").toString().equals("testrun")) {

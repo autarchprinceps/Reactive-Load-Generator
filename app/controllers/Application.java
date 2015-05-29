@@ -45,15 +45,10 @@ public class Application extends Controller {
         final Inbox inbox = Inbox.create(system);
 
         //create test testplan and run
-        //Testplan myTestplan = new Testplan(
-	    //    NumRuns = 1, // Per Parallel Worker
-	    //    Path = new URL("http://www.google.com")
-	    //);
+        Testplan myTestplan = new Testplan(new ObjectId(), 1, 1, new URL("http://www.google.de"), 0, 0, ConnectionType.HTTP, null);
 
-        Testrun myTestrun = new Testrun();
-        myTestrun.setID(new ObjectId());
-        //myTestrun.setTestplan(myTestplan);
-        myTestrun.setSubscribers(new ArrayList<ActorRef>());
+        Testrun myTestrun = new Testrun(new ObjectId(), new ArrayList<ActorRef>(), null);
+        myTestrun.setTestplan(myTestplan);
 
         //let loadworker work
         loadworker.tell(myTestrun, ActorRef.noSender());

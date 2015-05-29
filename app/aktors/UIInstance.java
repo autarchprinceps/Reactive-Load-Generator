@@ -39,8 +39,6 @@ public class UIInstance extends UntypedActor {
 		websocket.tell(message.toString(), sender);
 	}
 
-
-
 	private User currentUser;
 	private List<ActorRef> running = new ArrayList<>();
 
@@ -118,7 +116,7 @@ public class UIInstance extends UntypedActor {
 					if (currentUser != null) {
 						DBGetCMD dbGetCMD2 = new DBGetCMD();
 						dbGetCMD2.t = DBGetCMD.Type.AllPlansForUser;
-						dbGetCMD2.id = currentUser.id;
+						dbGetCMD2.id = currentUser.getId();
 						db.tell(dbGetCMD2, getSelf());
 						System.out.println("DEBUG: UIInstance Got all plans");
 					} else {
