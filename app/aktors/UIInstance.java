@@ -72,8 +72,8 @@ public class UIInstance extends UntypedActor {
 	}
 
 	private final ActorRef websocket;
-	private final ActorSystem as;
-	private final ActorRef db;
+	private final ActorSystem as; // TODO Future?
+	private final ActorRef db; // TODO Future?
 
 	public UIInstance(ActorRef out, boolean testing) {
 		System.out.println("DEBUG: UIInstance new: " + out + " " + testing);

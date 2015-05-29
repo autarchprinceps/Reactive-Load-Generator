@@ -5,15 +5,14 @@ import java.util
 import java.util.concurrent.TimeUnit
 
 import akka.actor.{ActorSystem, Inbox, Props}
-import aktors.messages.ConnectionType
-import aktors.messages.{DBDelCMD, Testplan, Testrun}
+import aktors.messages._
 import aktors.{DB, UIInstance}
 import com.typesafe.config.ConfigFactory
+import org.bson.types.ObjectId
 import play.api.libs.json.{Json, JsObject, JsString, JsValue}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 import scala.util.Random
 
@@ -133,32 +132,18 @@ class TestUIInstance {
 	val testplans = new ArrayBuffer[Testplan](50)
 
 	def testStorePlan = {
-		for(i <- 0 until 50) {
-			println("DEBUG: TestUIInstance Testplan creating " + i)
-			val tmp = new Testplan() // TODO FIX WTF Blockiert !
-			print("new ")
-			tmp.setConnectionType(ConnectionType.HTTP)
-			print("connType ")
-			tmp.setNumRuns(i + random.nextInt(i + 1))
-			print("numruns ")
-			tmp.setParallelity(1 + random.nextInt(10))
-			print("para ")
-			tmp.setPath(new URL("http://localhost:1301")) // TODO Server needs to be started at that address, from Java?
-			print("path ")
-			tmp.setWaitBeforeStart(0)
-			print("wbs ")
-			tmp.setWaitBetweenMsgs(0)
-			print("wbm ")
-			val jon = tmp.toJSON(false)
-			print("toJson ")
+		for(k <- 0 until 50) {
+			val ttp = new Testplan
+			ttp.setId(new ObjectId)
+			ttp.setConnectionType(ConnectionType.HTTP)
+			ttp.setNumRuns(k + random.nextInt(k + 1))
+			ttp.setParallelity(random.nextInt(10) + 1)
+			ttp.setPath(new URL("http://localhost:1301"))
 			ws(List(
 				("type", JsString("store plan"))
-			,	("testplan", jon)
+			,   ("testplan", ttp.toJSON(false))
 			))
-			print("ws ")
-			testplans += tmp
-			println("+=")
-			println("DEBUG: TestUIInstance Testplan created " + i)
+			testplans += ttp
 		}
 	}
 

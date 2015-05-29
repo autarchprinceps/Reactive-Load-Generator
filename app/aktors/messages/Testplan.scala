@@ -36,7 +36,7 @@ object Testplan {
 	}
 }
 
-class Testplan { // TODO FIX new blockiert
+class Testplan {
 	override def hashCode: Int = getId.hashCode
 
 	override def equals(other: Any): Boolean = other match {

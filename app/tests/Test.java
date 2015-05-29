@@ -141,7 +141,7 @@ public class Test {
 			// Thread.sleep(1000);
 			for (int i = 0; i < plans.size(); i++) {
 				Testplan p = (Testplan) inbox.receive(Duration.create(200, TimeUnit.MINUTES));
-				if(plans.stream().filter(plan -> plan.equals(p)).count() != 1) { // TODO Does equals have to be implemented manually in Testplan ?!
+				if(plans.stream().filter(plan -> plan.equals(p)).count() != 1) {
 					problems.add(problem(
 						new Exception().getStackTrace()[0],
 						"A plan doesn't match: " + p.toJSON(true).toString()
@@ -160,14 +160,14 @@ public class Test {
 			// Thread.sleep(1000);
 			for (int i = 0; i < plans.size(); i++) {
 				Testrun r = (Testrun) inbox.receive(Duration.create(200, TimeUnit.MINUTES));
-				if(runs.stream().filter(run -> run.equals(r)).count() != 1) { // TODO Does equals have to be implemented manually ?!
+				if(runs.stream().filter(run -> run.equals(r)).count() != 1) {
 					problems.add(problem(
 						new Exception().getStackTrace()[0],
 						"A run doesn't match: " + r.toJSON(true).toString()
 					));
 				}
 			}
-			System.out.println("dbTest got runs, starting get raw");
+			System.out.println("dbTest got runs, starting get raw"); // TODO FIX Dead Letters after this
 			// Thread.sleep(10000);
 			// get raw
 			runs.stream().forEach(testrun1 -> {
