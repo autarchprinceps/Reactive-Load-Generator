@@ -20,7 +20,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class Test {
 	public static String problem(StackTraceElement ex, String str) {
-		return ex.getClassName() + "/" + ex.getMethodName() + ":" + ex.getLineNumber() + "-> " + str;
+		String problem = ex.getClassName() + "/" + ex.getMethodName() + ":" + ex.getLineNumber() + "-> " + str;
+		System.err.println("ERROR: " + problem);
+		return problem;
 	}
 
 	public static List<String> dbTest() {
@@ -62,22 +64,22 @@ public class Test {
 			// Thread.sleep(1000);
 			// insert plans
 			for (int i = 0; i < 100; i++) {
-				Testplan tmp = new Testplan();
+				/*Testplan tmp = new Testplan();
 				tmp.setUser(users.get(random.nextInt(users.size())));
 				tmp.setConnectionType(ConnectionType.values()[random.nextInt(ConnectionType.values().length)]);
 				tmp.setNumRuns(1 + random.nextInt(20) + random.nextInt(20) + random.nextInt(20));
 				tmp.setParallelity(1 + random.nextInt(20));
 				tmp.setId(new ObjectId());
 				tmp.setWaitBeforeStart(random.nextInt(10));
-				tmp.setWaitBetweenMsgs(random.nextInt(10));
-				try {
-					tmp.setPath(new URL("http://example.com:1337/test/blub")); // TODO autogen?
-				} catch (MalformedURLException ex) {
-					ex.printStackTrace();
-					problems.add(problem(ex.getStackTrace()[0], "URL Malformed (Error in test, not code)"));
-				}
-				inbox.send(db_ref, tmp);
-				plans.add(tmp);
+				tmp.setWaitBetweenMsgs(random.nextInt(10));*/
+				//try {
+					//tmp.setPath(new URL("http://example.com:1337/test/blub")); // TODO autogen?
+				//} catch (MalformedURLException ex) {
+					//ex.printStackTrace();
+					//problems.add(problem(ex.getStackTrace()[0], "URL Malformed (Error in test, not code)"));
+				//}
+				//inbox.send(db_ref, tmp);
+				//plans.add(tmp);
 			}
 			System.out.println("dbTest plans inserted, starting insert runs");
 			// Thread.sleep(10000);

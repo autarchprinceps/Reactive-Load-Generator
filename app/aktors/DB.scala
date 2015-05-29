@@ -123,19 +123,17 @@ class DB(database : String) extends UntypedActor {
 			)
 		}
 
-		def convertPlan(document : testplancoll.T) : Testplan = {
-			// TODO utilise currentuser, when account subsystem is implemented?
-			val planObject = new Testplan()
-			planObject.user = Future { getUser(document.getAs[ObjectId]("user").get) }
-			planObject.setId(document.getAs[ObjectId]("_id").get)
-			planObject.setWaitBeforeStart(document.getAs[Int]("waitBeforeStart").get)
-			planObject.setWaitBetweenMsgs(document.getAs[Int]("waitBetweenMsgs").get)
-			planObject.setParallelity(document.getAs[Int]("parallelity").get)
-			planObject.setNumRuns(document.getAs[Int]("numRuns").get)
-			planObject.setPath(new URL(document.getAs[String]("path").get))
-			planObject.setConnectionType(ConnectionType.valueOf(document.getAs[String]("connectionType").get))
-			return planObject
-		}
+		// TODO utilise currentuser, when account subsystem is implemented?
+		def convertPlan(document : testplancoll.T) : Testplan = new Testplan(
+			User = Future { getUser(document.getAs[ObjectId]("user").get) },
+			ID = document.getAs[ObjectId]("_id").get,
+			WaitBeforeStart = document.getAs[Int]("waitBeforeStart").get,
+			WaitBetweenMsgs = document.getAs[Int]("waitBetweenMsgs").get,
+			Parallelity = document.getAs[Int]("parallelity").get,
+			NumRuns = document.getAs[Int]("numRuns").get,
+			Path = new URL(document.getAs[String]("path").get),
+			ConnectionType = ConnectionType.valueOf(document.getAs[String]("connectionType").get)
+		)
 
 		def getPlan(id : ObjectId) : Testplan = convertPlan(testplancoll.findOneByID(id).get)
 

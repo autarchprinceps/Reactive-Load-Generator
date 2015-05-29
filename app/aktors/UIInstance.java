@@ -18,46 +18,6 @@ import java.util.List;
  * Created by Patrick Robinson on 07.05.2015.
  */
 public class UIInstance extends UntypedActor {
-	private class RunnerConnector extends UntypedActor {
-		@Override
-		public void onReceive(Object message) throws Exception {
-			if(message instanceof LoadWorkerRaw) {
-				websocket.tell(JSONHelper.objectResponse(
-					"raw"
-				,   ((LoadWorkerRaw)message).toJSON(false)
-				), getSelf());
-			} else if(message instanceof Testrun) {
-				websocket.tell(JSONHelper.objectResponse(
-					"runstart"
-				,   ((Testrun)message).toJSON(true)
-				), getSelf());
-			} else {
-				unhandled(message);
-			}
-		}
-	}
-	private class RunLoader extends UntypedActor {
-
-		@Override
-		public void onReceive(Object message) throws Exception {
-			if(message instanceof Testrun) {
-				Testrun testrun = (Testrun)message;
-				websocket.tell(JSONHelper.objectResponse("testrun", testrun.toJSON()), getSelf());
-				DBGetCMD dbGetCMD = new DBGetCMD();
-				dbGetCMD.t = DBGetCMD.Type.RunRaws;
-				dbGetCMD.id = testrun.getID();
-				db.tell(dbGetCMD, getSelf());
-			} else if(message instanceof LoadWorkerRaw) {
-				websocket.tell(JSONHelper.objectResponse(
-					"raw"
-				,   ((LoadWorkerRaw)message).toJSON(false)
-				), getSelf());
-			} else {
-				unhandled(message);
-			}
-		}
-	}
-
 	public static Props props(ActorRef out) { return props(out, false); }
 
 	public static Props props(ActorRef out, boolean testing) {
@@ -143,7 +103,7 @@ public class UIInstance extends UntypedActor {
 						,   as
 						,   testplan
 						,   db
-						,   as.actorOf(Props.create(RunnerConnector.class))
+						,   as.actorOf(Props.create(RunnerConnector.class, websocket))
 						));
 						newRunner.tell(RunnerCMD.Start, getSelf()); // TODO seperate start necessary? depends on UI
 						running.add(newRunner);
@@ -190,7 +150,7 @@ public class UIInstance extends UntypedActor {
 						DBGetCMD dbGetCMD1 = new DBGetCMD();
 						dbGetCMD1.t = DBGetCMD.Type.RunByID;
 						dbGetCMD1.id = new ObjectId(JSONHelper.JsStringToString(json.$bslash("id")));
-						db.tell(dbGetCMD1, as.actorOf(Props.create(RunLoader.class)));
+						db.tell(dbGetCMD1, as.actorOf(Props.create(RunLoader.class, websocket, db))); // TODO seperate db ?
 						System.out.println("DEBUG: UIInstance Loaded run");
 					} else {
 						ws(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());

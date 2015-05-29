@@ -16,27 +16,28 @@ import scala.concurrent.ExecutionContext.Implicits.global
  */
 object Testplan {
 	@throws(classOf[MalformedURLException])
-	def fromJSON(plan: JsObject): Testplan = {
-		val result: Testplan = new Testplan
-		result.setId(if(plan.\("id").isInstanceOf[JsString])
-			new ObjectId(JSONHelper.JsStringToString(plan.\("id")))
-		else
-			new ObjectId
-		)
-		if(plan.\("user").isInstanceOf[JsObject]) {
-			result.user = Future { User.fromJSON(plan.\("user").asInstanceOf[JsObject]) }
-		}
-		result.setPath(new URL(JSONHelper.JsStringToString(plan.\("path"))))
-		result.setConnectionType(ConnectionType.valueOf(JSONHelper.JsStringToString(plan.\("connectionType"))))
-		result.setNumRuns((plan.\("numRuns").asInstanceOf[JsNumber]).value.intValue)
-		result.setParallelity((plan.\("parallelity").asInstanceOf[JsNumber]).value.intValue)
-		result.setWaitBetweenMsgs(if (plan.\("waitBetweenMsgs").isInstanceOf[JsNumber]) (plan.\("waitBetweenMsgs").asInstanceOf[JsNumber]).value.intValue else 0)
-		result.setWaitBeforeStart(if (plan.\("waitBeforeStart").isInstanceOf[JsNumber]) (plan.\("waitBeforeStart").asInstanceOf[JsNumber]).value.intValue else 0)
-		return result
-	}
+	def fromJSON(plan: JsObject): Testplan = new Testplan(
+		ID = if(plan.\("id").isInstanceOf[JsString]) new ObjectId(JSONHelper.JsStringToString(plan.\("id"))) else new ObjectId,
+		Path = new URL(JSONHelper.JsStringToString(plan.\("path"))),
+		ConnectionType =ConnectionType.valueOf(JSONHelper.JsStringToString(plan.\("connectionType"))),
+		NumRuns = (plan.\("numRuns").asInstanceOf[JsNumber]).value.intValue,
+		Parallelity = (plan.\("parallelity").asInstanceOf[JsNumber]).value.intValue,
+		WaitBetweenMsgs = if (plan.\("waitBetweenMsgs").isInstanceOf[JsNumber]) (plan.\("waitBetweenMsgs").asInstanceOf[JsNumber]).value.intValue else 0,
+		WaitBeforeStart = if (plan.\("waitBeforeStart").isInstanceOf[JsNumber]) (plan.\("waitBeforeStart").asInstanceOf[JsNumber]).value.intValue else 0,
+		User = Future { if(plan.\("user").isInstanceOf[JsObject]) User.fromJSON(plan.\("user").asInstanceOf[JsObject]) else null }
+	)
 }
 
-class Testplan {
+class Testplan(
+	ID : ObjectId = new ObjectId,
+	NumRuns : Int,
+	Parallelity : Int = 1,
+	Path : URL,
+	WaitBetweenMsgs : Int = 0,
+    WaitBeforeStart : Int = 0,
+	ConnectionType : ConnectionType = ConnectionType.HTTP,
+	User : Future[User] = Future {null}
+) {
 	override def hashCode: Int = getId.hashCode
 
 	override def equals(other: Any): Boolean = other match {
@@ -45,71 +46,20 @@ class Testplan {
 		case _ => false
 	}
 
-	private[this] var id: ObjectId = null
+	def getId: ObjectId = ID
+	def getNumRuns: Int = NumRuns
+	def getParallelity: Int = Parallelity
+	def getPath: URL = Path
+	def getWaitBetweenMsgs: Int = WaitBetweenMsgs
+	def getWaitBeforeStart: Int = WaitBeforeStart
+	def getConnectionType: ConnectionType = ConnectionType
 
-	def getId: ObjectId = id
-
-	def setId(value: ObjectId): Unit = {
-	  id = value
-	}
-
-	private[this] var numRuns: Int = 0
-
-	def getNumRuns: Int = numRuns
-
-	def setNumRuns(value: Int): Unit = {
-	  numRuns = value
-	}
-
-	private[this] var parallelity: Int = 0
-
-	def getParallelity: Int = parallelity
-
-	def setParallelity(value: Int): Unit = {
-	  parallelity = value
-	}
-
-	private[this] var path: URL = null
-
-	def getPath: URL = path
-
-	def setPath(value: URL): Unit = {
-	  path = value
-	}
-
-	private[this] var waitBetweenMsgs: Int = 0
-
-	def getWaitBetweenMsgs: Int = waitBetweenMsgs
-
-	def setWaitBetweenMsgs(value: Int): Unit = {
-	  waitBetweenMsgs = value
-	}
-
-	private[this] var waitBeforeStart: Int = 0
-
-	def getWaitBeforeStart: Int = waitBeforeStart
-
-	def setWaitBeforeStart(value: Int): Unit = {
-	  waitBeforeStart = value
-	}
-
-	private[this] var connectionType: ConnectionType = ConnectionType.HTTP
-
-	def getConnectionType: ConnectionType = connectionType
-
-	def setConnectionType(value: ConnectionType): Unit = {
-	  connectionType = value
-	}
-
-	var user: Future[User] = Future {null}
-
+	var user: Future[User] = User
 	def getUser: User = Await.result(user, Duration(10, TimeUnit.MINUTES))
-
 	def setUser(User: User) = user = Future { User } // TODO better
 	def setUser(User: Future[User]) = user = User
 
 	def toJSON: JsObject = toJSON(true)
-
 	def toJSON(withUser: Boolean): JsObject = // TODO duplicate code
 	if(withUser)
 		Json.obj(

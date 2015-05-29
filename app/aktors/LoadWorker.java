@@ -39,7 +39,8 @@ public class LoadWorker extends UntypedActor {
                     }
                 }
                 for (int i = 0; i < plan.getNumRuns(); i++) {
-                    LoadWorkerRaw msg = new LoadWorkerRaw(init, i, System.currentTimeMillis(), 0);
+                    long start = System.currentTimeMillis();
+
 
                     // HTTP GET Request
                     try {
@@ -70,7 +71,7 @@ public class LoadWorker extends UntypedActor {
                     	// TODO Auto-generated catch block
                     	e1.printStackTrace();
                     }
-                    msg.setEnd(System.currentTimeMillis());
+	                LoadWorkerRaw msg = new LoadWorkerRaw(init, i, start, System.currentTimeMillis());
 	                System.out.println("Loadworker performing the actual test");
 
                     init.getSubscribers().parallelStream().forEach((actorRef -> actorRef.tell(msg, getSelf())));
