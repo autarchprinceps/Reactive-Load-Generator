@@ -13,6 +13,7 @@ import play.api.libs.json.{Json, JsObject, JsString, JsValue}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 import scala.util.Random
 
@@ -29,7 +30,7 @@ class TestUIInstance {
 		)
 	)
 	val inbox = Inbox.create(as)
-	val uii = as.actorOf(Props.create(classOf[UIInstance], inbox.getRef, true.asInstanceOf[AnyRef]))
+	val uii = as.actorOf(UIInstance.props(inbox.getRef, true)) // TODO FIX not in testing db
 	val db = as.actorOf(Props(classOf[DB]), "junit_loadgen")
 	val random = new Random
 	val problems = new util.LinkedList[String]()
@@ -47,20 +48,28 @@ class TestUIInstance {
 		println("TestUIInstance start")
 		testNotAuth
 		println("TestUIInstance testNotAuth")
+		Thread.sleep(2000)
 		testRegLogin
 		println("TestUIInstance testRegLogin")
+		Thread.sleep(2000)
 		testStorePlan
 		println("TestUIInstance testStorePlan")
+		Thread.sleep(2000)
 		testAllPlans
 		println("TestUIInstance testAllPlans")
+		Thread.sleep(2000)
 		testRun
 		println("TestUIInstance testRun")
+		Thread.sleep(2000)
 		testLoadPlan
 		println("TestUIInstance testLoadPlan")
+		Thread.sleep(2000)
 		testLoadRun
 		println("TestUIInstance testLoadRun")
+		Thread.sleep(2000)
 		drop
 		println("TestUIInstance drop")
+		Thread.sleep(2000)
 		return problems
 	}
 
@@ -70,32 +79,39 @@ class TestUIInstance {
 
 	def testRegLogin = {
 		val alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+		val names = new ArrayBuffer[String]()
+		val passwords = new ArrayBuffer[String]()
 		for(i <- 0 until 20) {
 			var name = "" + alphabet.charAt(i % alphabet.length)
 			var password = "" + alphabet.charAt(i % alphabet.length)
-			for(j <- 0 until i / 10 + 5) {
-				name += alphabet.charAt((i + j + random.nextInt(i+1)) % alphabet.length)
-				password += alphabet.charAt((i + j + random.nextInt(i+1)) % alphabet.length)
+			for (j <- 0 until i / 10 + 5) {
+				name += alphabet.charAt((i + j + random.nextInt(i + 1)) % alphabet.length)
+				password += alphabet.charAt((i + j + random.nextInt(i + 1)) % alphabet.length)
 			}
 			ws(List(
 				("type", JsString("register"))
-			,	("name", JsString(name))
-			,	("password", JsString(password))
+				, ("name", JsString(name))
+				, ("password", JsString(password))
 			))
-			if(!answerCheckType("registered")) problems.add(Test.problem(new Exception().getStackTrace()(0), "Register failed: " + i + " " + name + " " + password))
+			if (!answerCheckType("registered")) problems.add(Test.problem(new Exception().getStackTrace()(0), "Register failed: " + i + " " + name + " " + password))
+			names += name
+			passwords += password
+		}
+		Thread.sleep(2000)
+		for(i <- 0 until 20) {
 			ws(List(
 				("type", JsString("login"))
-			,	("name", JsString(name))
-			,	("password", JsString(password))
+			,	("name", JsString(names(i)))
+			,	("password", JsString(passwords(i)))
 			))
-			if(!answerCheckType("login")) problems.add(Test.problem(new Exception().getStackTrace()(0), "Login failed: " + i + " " + name + " " + password))
+			if(!answerCheckType("login")) problems.add(Test.problem(new Exception().getStackTrace()(0), "Login failed: " + i + " " + names(i) + " " + passwords(i)))
 			// TODO check authenticated
 			ws(List(
 				("type", JsString("logout"))
-			,	("name", JsString(name))
-			,	("password", JsString(password))
+			,	("name", JsString(names(i)))
+			,	("password", JsString(passwords(i)))
 			))
-			if(!answerCheckType("logout")) problems.add(Test.problem(new Exception().getStackTrace()(0), "Logout failed: " + i + " " + name + " " + password))
+			if(!answerCheckType("logout")) problems.add(Test.problem(new Exception().getStackTrace()(0), "Logout failed: " + i + " " + names(i) + " " + passwords(i)))
 			// TODO check not auth
 		}
 
@@ -105,6 +121,7 @@ class TestUIInstance {
 		,	("password", JsString("test"))
 		))
 		if(!answerCheckType("registered")) problems.add(Test.problem(new Exception().getStackTrace()(0), "Register failed: test test"))
+		Thread.sleep(500)
 		ws(List(
 			("type", JsString("login"))
 		,	("name", JsString("test"))
@@ -117,18 +134,31 @@ class TestUIInstance {
 
 	def testStorePlan = {
 		for(i <- 0 until 50) {
-			val tmp = new Testplan()
+			println("DEBUG: TestUIInstance Testplan creating " + i)
+			val tmp = new Testplan() // TODO FIX WTF Blockiert !
+			print("new ")
 			tmp.setConnectionType(ConnectionType.HTTP)
+			print("connType ")
 			tmp.setNumRuns(i + random.nextInt(i + 1))
+			print("numruns ")
 			tmp.setParallelity(1 + random.nextInt(10))
+			print("para ")
 			tmp.setPath(new URL("http://localhost:1301")) // TODO Server needs to be started at that address, from Java?
+			print("path ")
 			tmp.setWaitBeforeStart(0)
+			print("wbs ")
 			tmp.setWaitBetweenMsgs(0)
+			print("wbm ")
+			val jon = tmp.toJSON(false)
+			print("toJson ")
 			ws(List(
 				("type", JsString("store plan"))
-			,	("testplan", tmp.toJSON(false))
+			,	("testplan", jon)
 			))
+			print("ws ")
 			testplans += tmp
+			println("+=")
+			println("DEBUG: TestUIInstance Testplan created " + i)
 		}
 	}
 
@@ -145,10 +175,9 @@ class TestUIInstance {
 
 	def testRun = {
 		for(i <- 0 until (testplans length)) {
-			val numTR = 1 + random.nextInt(10)
+			val numTR = 3
 			val tmpabuf = new ArrayBuffer[Testrun](numTR)
 			val tmptp = testplans(i)
-			testruns put(tmptp, tmpabuf)
 			for(j <- 0 until numTR) {
 				ws(List(
 					("type", JsString("start run"))
@@ -168,6 +197,7 @@ class TestUIInstance {
 					}
 				}
 			}
+			testruns put(tmptp, tmpabuf)
 		}
 	}
 
@@ -179,7 +209,7 @@ class TestUIInstance {
 			,	("id", JsString(tmptp.getId.toString))
 			))
 			for(j <- 0 until (testruns(tmptp) length) + 1) {
-				var response = get
+				val response = get
 				if(!
 				(	get.\("type").toString().equals("testplan")
 				&&	Testplan.fromJSON(get.\("content").asInstanceOf[JsObject]).equals(tmptp))

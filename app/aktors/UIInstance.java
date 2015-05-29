@@ -76,9 +76,10 @@ public class UIInstance extends UntypedActor {
 	private final ActorRef db;
 
 	public UIInstance(ActorRef out, boolean testing) {
+		System.out.println("DEBUG: UIInstance new: " + out + " " + testing);
 		this.websocket = out;
 		as = ActorSystem.create();
-		db = as.actorOf(Props.create(DB.class), testing ? "junit_loadgen" : "loadgen");
+		db = as.actorOf(Props.create(DB.class, testing ? "junit_loadgen" : "loadgen"));
 	}
 
 	private void ws(JsObject message, ActorRef sender) {

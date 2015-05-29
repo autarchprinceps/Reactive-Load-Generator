@@ -36,7 +36,7 @@ object Testplan {
 	}
 }
 
-class Testplan {
+class Testplan { // TODO FIX new blockiert
 	override def hashCode: Int = getId.hashCode
 
 	override def equals(other: Any): Boolean = other match {
@@ -101,7 +101,7 @@ class Testplan {
 	  connectionType = value
 	}
 
-	var user: Future[User] = null
+	var user: Future[User] = Future {null}
 
 	def getUser: User = Await.result(user, Duration(10, TimeUnit.MINUTES))
 
