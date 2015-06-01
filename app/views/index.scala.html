@@ -1,9 +1,42 @@
 @(message: String)
 
-@main("Welcome to Play") {
+@main("Loadgenerator") {
 
-    <form method="POST" action="@routes.Application.startTest()">
-		<button>Start Test</button>
-	</form>
+
+<div id="container">
+<div id="header"><h1>Load Generator Akka Play</h1></div>
+  <div id="wrapper">
+    <div id="content">      
+	  <p><form>
+        <p>Target:<br>
+			<select>
+            <option value="server1">Server 1</option>
+            <option value="server2">Server 2</option>
+            <option value="server3">Server 3</option>
+            <option value="server4">Server 4</option>
+			</select>
+		</p> 
+        <br>
+        <p>How much load? (total Requests): <br>
+        <input type="text" name="load">
+		<form method="POST" action="@routes.Application.startTest()">
+			<button>Start Test</button>
+		</form>
+		</p>
+        
+    </form> </p>
+	
+	<br><br>
+    
+	
+	
+    </div>
+  </div>
+  <div id="footer">
+    <p>Alex Laitenberger & Patrick Robinson at Web Engineering Hochschule Bonn Rhein-Sieg</p>
+  </div>
+</div>
+
+    
 
 }
