@@ -23,7 +23,7 @@ object LoadWorkerRaw {
 }
 
 class LoadWorkerRaw(Testrun: Future[Testrun], IterOnWorker : Int, StartTime : Long, EndTime : Long) {
-	def getTestrun: Testrun = Await.result(Testrun, Duration(10, TimeUnit.MINUTES)) // TODO async
+	def getTestrun: Testrun = Await.result(Testrun, Duration(10, TimeUnit.MINUTES))
 	def getIterOnWorker: Int = IterOnWorker
 	def getStart: Long = StartTime
 	def getEnd: Long = EndTime

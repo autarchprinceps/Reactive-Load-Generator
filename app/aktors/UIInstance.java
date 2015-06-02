@@ -58,6 +58,7 @@ public class UIInstance extends UntypedActor {
 					,   name
 					,   JSONHelper.JsStringToString(json.$bslash("password"))
 					);
+					System.out.println("DEBUG: UIInstance created user " + user.toJSON(true).toString());
 					db.tell(user, getSelf());
 					ws(JSONHelper.simpleResponse("registered", "Registered " + name), getSelf());
 					System.out.println("DEBUG: UIInstance Registered " + name);

@@ -4,10 +4,11 @@ import java.net.URL
 import java.util
 import java.util.concurrent.TimeUnit
 
-import akka.actor.{ActorSystem, Inbox, Props}
+import akka.actor.{ActorRef, ActorSystem, Inbox, Props}
 import aktors.messages._
 import aktors.{DB, UIInstance}
 import com.typesafe.config.ConfigFactory
+import helper.JSONHelper
 import org.bson.types.ObjectId
 import play.api.libs.json.{Json, JsObject, JsString, JsValue}
 
@@ -23,22 +24,23 @@ import scala.util.Random
 class TestUIInstance {
 	val as: ActorSystem = ActorSystem.create(
 		"Test"
-	,   ConfigFactory.load(
+		,   ConfigFactory.load(
 			ConfigFactory.parseString("akka.actor.dsl.inbox-size=1000000")
 				.withFallback(ConfigFactory.load)
 		)
 	)
-	val inbox = Inbox.create(as)
-	val uii = as.actorOf(UIInstance.props(inbox.getRef, true))
-	val db = as.actorOf(Props(classOf[DB]), "junit_loadgen")
-	val random = new Random
-	val problems = new util.LinkedList[String]()
+	val inbox : Inbox = Inbox.create(as)
+	val uii : ActorRef = as.actorOf(UIInstance.props(inbox.getRef, true))
+	val db : ActorRef = as.actorOf(Props(classOf[DB], "junit_loadgen"))
+	val random : Random = new Random
+	val problems : util.LinkedList[String] = new util.LinkedList[String]()
 
 	def ws(what: Seq[(String, JsValue)]) = inbox.send(uii, JsObject(what).toString)
 
 	def answerCheckType(typeToCheck : String) : Boolean = {
 		val ans = get
-		return ans.isInstanceOf[JsObject] && ans.asInstanceOf[JsObject].\("type").toString().equals(typeToCheck)
+		println("DEBUG: TestUIInstance answerCheckType " + typeToCheck + " : " + ans.toString)
+		return ans.isInstanceOf[JsObject] && JSONHelper.JsStringToString(ans.asInstanceOf[JsObject].\("type")).equals(typeToCheck)
 	}
 
 	def get : JsObject = Json.parse(inbox.receive(Duration.create(10, TimeUnit.MINUTES)).asInstanceOf[String]).asInstanceOf[JsObject]
@@ -92,6 +94,7 @@ class TestUIInstance {
 				, ("name", JsString(name))
 				, ("password", JsString(password))
 			))
+			// TODO FIX exc
 			if (!answerCheckType("registered")) problems.add(Test.problem(new Exception().getStackTrace()(0), "Register failed: " + i + " " + name + " " + password))
 			names += name
 			passwords += password

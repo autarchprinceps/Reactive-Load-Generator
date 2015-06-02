@@ -30,11 +30,11 @@ class User(ID: ObjectId = new ObjectId(), Name: String, Password: String = "") {
 	def getName: String = Name
 	def getID: ObjectId = ID
 
-	private var _password: String = null
+	private var _password: String = Password
 	def check(passwordCandidate: String): Boolean = _password == passwordCandidate
 	def getPassword: String = _password
 	def changePassword(oldPw: String, newPw: String): Boolean = {
-		if (oldPw == Password) {
+		if (oldPw == _password) {
 			_password = newPw
 			return true
 		}
