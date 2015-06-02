@@ -29,7 +29,7 @@ class TestUIInstance {
 		)
 	)
 	val inbox = Inbox.create(as)
-	val uii = as.actorOf(UIInstance.props(inbox.getRef, true)) // TODO FIX not in testing db
+	val uii = as.actorOf(UIInstance.props(inbox.getRef, true))
 	val db = as.actorOf(Props(classOf[DB]), "junit_loadgen")
 	val random = new Random
 	val problems = new util.LinkedList[String]()

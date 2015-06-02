@@ -1,10 +1,13 @@
 package aktors.messages
 
+import java.util.concurrent.TimeUnit
+
 import play.api.libs.json._
-import scala.Tuple2
-import scala.collection.JavaConversions
 import java.net.MalformedURLException
-import java.util.ArrayList
+
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * Created by Patrick Robinson on 20.04.15.
@@ -12,24 +15,26 @@ import java.util.ArrayList
 object LoadWorkerRaw {
 	@throws(classOf[MalformedURLException])
 	def fromJSON(raw: JsObject): LoadWorkerRaw = new LoadWorkerRaw(
-		if(raw.\("testrun").isInstanceOf[JsObject]) Testrun.fromJSON(raw.\("testrun").asInstanceOf[JsObject]) else null
+		Future {if(raw.\("testrun").isInstanceOf[JsObject]) Testrun.fromJSON(raw.\("testrun").asInstanceOf[JsObject]) else null}
 	,	raw.\("iterOnWorker").asInstanceOf[JsNumber].value.intValue
 	,   raw.\("start").asInstanceOf[JsNumber].value.intValue
 	,   raw.\("end").asInstanceOf[JsNumber].value.intValue
 	)
 }
 
-class LoadWorkerRaw(Testrun: Testrun, IterOnWorker : Int, StartTime : Long, EndTime : Long) {
-	def getTestrun: Testrun = Testrun // TODO async
+class LoadWorkerRaw(Testrun: Future[Testrun], IterOnWorker : Int, StartTime : Long, EndTime : Long) {
+	def getTestrun: Testrun = Await.result(Testrun, Duration(10, TimeUnit.MINUTES)) // TODO async
 	def getIterOnWorker: Int = IterOnWorker
 	def getStart: Long = StartTime
 	def getEnd: Long = EndTime
+
+	def this(Testrun: Testrun, IterOnWorker : Int, StartTime : Long, EndTime : Long) = this(Future {Testrun}, IterOnWorker, StartTime, EndTime)
 
 	def toJSON(fullTestrun: Boolean = false): JsObject = Json.obj(
 		"iterOnWorker" -> JsNumber(IterOnWorker)
 	,	"start" -> JsNumber(StartTime)
 	,	"end" -> JsNumber(EndTime)
-	,	"testrun" -> (if(fullTestrun) getTestrun.toJSON else JsString(Testrun.getID.toString))
+	,	"testrun" -> (if(fullTestrun) getTestrun.toJSON else JsString(getTestrun.getID.toString))
 	)
 
 	def canEqual(other: Any): Boolean = other.isInstanceOf[LoadWorkerRaw]
@@ -43,8 +48,5 @@ class LoadWorkerRaw(Testrun: Testrun, IterOnWorker : Int, StartTime : Long, EndT
 		case _ => false
 	}
 
-	override def hashCode(): Int = {
-		val state = Seq(Testrun, IterOnWorker, StartTime, EndTime)
-		state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
-	}
+	override def hashCode(): Int = Seq(getTestrun, getIterOnWorker, getStart, getEnd).map(_.hashCode()).fold(0)((a,b) => a + b)
 }

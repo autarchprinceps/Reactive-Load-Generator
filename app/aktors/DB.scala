@@ -39,7 +39,7 @@ class DB(database : String = "loadgen") extends UntypedActor {
 			,	"connectionType" -> tplan.getConnectionType.toString
 			,	"user" -> tplan.getUser.getID
 			)) }}
-			case user : User => {Future { usercoll.insert(MongoDBObject( // TODO what if user exists already?
+			case user : User => {Future { usercoll.insert(MongoDBObject( // TODO !! what if user exists already?
 				"_id" -> user.getID
 			,	"name" -> user.getName
 			,   "password" -> user.getPassword
@@ -57,12 +57,10 @@ class DB(database : String = "loadgen") extends UntypedActor {
 					case DBGetCMD.Type.UserByID => getSender().tell(getUser(getCMD.id), getSelf())
 					case DBGetCMD.Type.RunRaws => {
 						val testrunobj = testruncoll.findOneByID(getCMD.id).get
-						val testrunF : Future[Testrun] = Future { convertRun(testrunobj) } // TODO expensive, can cut somehow?
+						val testrunF : Future[Testrun] = Future { convertRun(testrunobj) }
 						testrunobj.getAs[MongoDBList]("runs").get.foreach(obj => {
 							val raw = obj.asInstanceOf[BasicDBObject]
-							testrunF onSuccess {
-								case testrun => getSender().tell(new LoadWorkerRaw(testrun, raw.getAs[Int]("iter").get, raw.getAs[Long]("start").get, raw.getAs[Long]("end").get), getSelf())
-							}
+							getSender().tell(new LoadWorkerRaw(testrunF, raw.getAs[Int]("iter").get, raw.getAs[Long]("start").get, raw.getAs[Long]("end").get), getSelf())
 						})
 					}
 				}
