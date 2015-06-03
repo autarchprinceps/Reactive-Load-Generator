@@ -69,7 +69,7 @@ class DB(database : String = "loadgen") extends UntypedActor {
 					val user = new User(
 						result.getAs[ObjectId]("_id").get
 					,   result.getAs[String]("name").get
-					,   result.getAs[String]("password").get // TODO FIX None.get
+					,   result.getAs[String]("password").get
 					)
 					query.flag = user.check(query.terms.get("password"))
 					if(query.flag) query.result = user

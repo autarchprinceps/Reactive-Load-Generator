@@ -17,6 +17,10 @@ import java.util.List;
  * Created by Patrick Robinson on 22.04.15.
  */
 public class LoadRunner extends UntypedActor {
+	public static LoadRunner props(ActorSystem as, Testplan testplan, ActorRef db, ActorRef... parentSubscribers) {
+		return new LoadRunner(as, testplan, db, parentSubscribers);
+	}
+
 	public LoadRunner(ActorSystem as, Testplan testplan, ActorRef db, ActorRef... parentSubscribers) {
 		this.as = as;
 		subscribers = new ArrayList<>(parentSubscribers.length + 1);

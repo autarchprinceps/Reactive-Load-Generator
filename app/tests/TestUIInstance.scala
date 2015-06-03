@@ -94,7 +94,6 @@ class TestUIInstance {
 				, ("name", JsString(name))
 				, ("password", JsString(password))
 			))
-			// TODO FIX exc
 			if (!answerCheckType("registered")) problems.add(Test.problem(new Exception().getStackTrace()(0), "Register failed: " + i + " " + name + " " + password))
 			names += name
 			passwords += password
@@ -155,7 +154,7 @@ class TestUIInstance {
 		ws(List(("type", JsString("all plans"))))
 		for(i <- 0 until 50) {
 			val obj = get
-			if(!(obj.\("type").toString()).equals("testplan") && (testplans contains(Testplan.fromJSON(obj.\("content").asInstanceOf[JsObject]))))
+			if(!(obj.\("type").toString().equals("testplan") && (testplans contains(Testplan.fromJSON(obj.\("content").asInstanceOf[JsObject])))))
 				problems.add(Test.problem(new Exception().getStackTrace()(0), "All plans failed: " + i + " result: " + obj.toString()))
 		}
 	}
