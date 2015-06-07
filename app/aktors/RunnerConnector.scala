@@ -15,7 +15,7 @@ private class RunnerConnector(out : ActorRef) extends UntypedActor {
 	@throws[Exception](classOf[Exception])
 	override def onReceive(message: Any): Unit = message match {
 		case raw : LoadWorkerRaw => out.tell(JSONHelper.objectResponse("raw", raw.toJSON(false)), getSelf)
-		case run : Testrun => out.tell(JSONHelper.objectResponse("runstart", run.toJSON(true)), getSelf)
+		case run : Testrun => out.tell(JSONHelper.objectResponse("runstart", run.toJSON(true)), getSelf) // TODO FIX Testrun.getTestplan
 		case _ => unhandled(message)
 	}
 }

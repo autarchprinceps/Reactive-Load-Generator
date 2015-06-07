@@ -131,12 +131,13 @@ class TestUIInstance {
 		if(!answerCheckType("login")) problems.add(Test.problem(new Exception().getStackTrace()(0), "Login failed: test test"))
 	}
 
-	val testplans = new ArrayBuffer[Testplan](50)
+	val testplans = new mutable.HashMap[ObjectId, Testplan]()
 
 	def testStorePlan = {
 		for(k <- 0 until 50) {
+			val tid = new ObjectId
 			val ttp = new Testplan(
-				ID = new ObjectId
+				ID = tid
 			,   ConType = ConnectionType.HTTP
 			,   NumRuns = k + random.nextInt(k + 1)
 			,   Parallelity = random.nextInt(10) + 1
@@ -146,7 +147,7 @@ class TestUIInstance {
 				("type", JsString("store plan"))
 			,   ("testplan", ttp.toJSON(false))
 			))
-			testplans += ttp
+			testplans += tid -> ttp
 		}
 	}
 
@@ -154,44 +155,42 @@ class TestUIInstance {
 		ws(List(("type", JsString("all plans"))))
 		for(i <- 0 until 50) {
 			val obj = get
-			if(!(obj.\("type").toString().equals("testplan") && (testplans contains(Testplan.fromJSON(obj.\("content").asInstanceOf[JsObject])))))
+			if(!obj.\("type").toString().equals("testplan") ||  testplans.get(new ObjectId(JSONHelper.JsStringToString(obj.\("content").\("id")))).isEmpty)
 				problems.add(Test.problem(new Exception().getStackTrace()(0), "All plans failed: " + i + " result: " + obj.toString()))
-		}
+		} // TODO Fix
 	}
 
 	val testruns = new mutable.HashMap[Testplan, ArrayBuffer[Testrun]]()
 
 	def testRun = {
-		for(i <- 0 until (testplans length)) {
+		for((_, tmptp) <- testplans) {
 			val numTR = 3
 			val tmpabuf = new ArrayBuffer[Testrun](numTR)
-			val tmptp = testplans(i)
-			for(j <- 0 until numTR) {
+			for (j <- 0 until numTR) {
 				ws(List(
 					("type", JsString("start run"))
-				,	("testplan", tmptp.toJSON(false))
+					, ("testplan", tmptp.toJSON(false))
 				))
 				val tmpget = get
-				if(!tmpget.\("type").toString().equals("runstart")) {
+				if (!tmpget.\("type").toString().equals("runstart")) {
 					problems.add(Test.problem(new Exception().getStackTrace()(0), "run not started: " + tmpget))
 				} else {
 					val tmprun = Testrun.fromJSON(tmpget.\("content").asInstanceOf[JsObject])
-					if(!tmprun.getTestplan.equals(tmptp))
+					if (!tmprun.getTestplan.equals(tmptp))
 						problems.add(Test.problem(new Exception().getStackTrace()(0), "Wrong Testplan for run: " + tmpget))
 					tmpabuf += tmprun
 					for (k <- 0 until tmptp.getNumRuns * tmptp.getParallelity) {
-						if(!get.\("type").toString().equals("raw"))
+						if (!get.\("type").toString().equals("raw"))
 							problems.add(Test.problem(new Exception().getStackTrace()(0), "Not enought raws received for Testrun: " + tmprun.toJSON(true)))
 					}
 				}
 			}
-			testruns put(tmptp, tmpabuf)
+			testruns += tmptp -> tmpabuf
 		}
 	}
 
 	def testLoadPlan = {
-		for(i <- 0 until (testplans length)) {
-			val tmptp = testplans(i)
+		for((_, tmptp) <- testplans) {
 			ws(List(
 				("type", JsString("load plan"))
 			,	("id", JsString(tmptp.getID.toString))
@@ -210,13 +209,12 @@ class TestUIInstance {
 	}
 
 	def testLoadRun = {
-		for(i <- 0 until (testplans length)) {
-			val tmptp = testplans(i)
+		for((_, tmptp) <- testplans) {
 			val tmptrs = testruns(tmptp)
 			for(j <- 0 until (tmptrs length)) {
 				ws(List(
 					("type", JsString("load run"))
-				,	("id", JsString(tmptrs(j).getID.toString))
+					,	("id", JsString(tmptrs(j).getID.toString))
 				))
 				val recrun = get
 				if(!recrun.\("type").toString().equals("testrun")) {

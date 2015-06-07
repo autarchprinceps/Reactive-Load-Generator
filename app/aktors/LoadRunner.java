@@ -17,24 +17,22 @@ import java.util.List;
  * Created by Patrick Robinson on 22.04.15.
  */
 public class LoadRunner extends UntypedActor {
-	public static LoadRunner props(ActorSystem as, Testplan testplan, ActorRef db, ActorRef... parentSubscribers) {
-		return new LoadRunner(as, testplan, db, parentSubscribers);
+	public static LoadRunner props(ActorSystem as, Testplan testplan, ActorRef db, ActorRef ui) {
+		return new LoadRunner(as, testplan, db, ui);
 	}
 
-	public LoadRunner(ActorSystem as, Testplan testplan, ActorRef db, ActorRef... parentSubscribers) {
+	public LoadRunner(ActorSystem as, Testplan testplan, ActorRef db, ActorRef ui) {
 		this.as = as;
-		subscribers = new ArrayList<>(parentSubscribers.length + 1);
+		subscribers = new ArrayList<>(2);
 		subscribers.add(db);
-		for(ActorRef a : parentSubscribers) {
-			subscribers.add(a);
-		}
+		subscribers.add(ui);
 
         testrun = new Testrun(new ObjectId(), subscribers, null);
 		testrun.setTestplan(testplan);
-        db.tell(testrun, getSelf());
-		for(ActorRef parentSubscriber : parentSubscribers) {
-			parentSubscriber.tell(testrun, getSelf());
-		}
+		System.out.println("DEBUG LoadRunner testplan: " + testplan.toJSON());
+		System.out.println("DEBUG LoadRunner testrun: " + testrun);
+		System.out.println("DEBUG LoadRunner testrun: " + testrun.toJSON(true));
+		subscribers.parallelStream().forEach(actorRef -> actorRef.tell(testrun, getSelf()));
 
         workers = new ArrayList<>(testrun.getTestplan().getParallelity());
         for(int i = 0; i < testrun.getTestplan().getParallelity(); i++) {
