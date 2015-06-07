@@ -31,7 +31,7 @@ public class LoadRunner extends UntypedActor {
 		testrun.setTestplan(testplan);
 		System.out.println("DEBUG LoadRunner testplan: " + testplan.toJSON());
 		System.out.println("DEBUG LoadRunner testrun: " + testrun);
-		System.out.println("DEBUG LoadRunner testrun: " + testrun.toJSON(true));
+		System.out.println("DEBUG LoadRunner testrun: " + testrun.toJSON(true)); // TODO FIX
 		subscribers.parallelStream().forEach(actorRef -> actorRef.tell(testrun, getSelf()));
 
         workers = new ArrayList<>(testrun.getTestplan().getParallelity());

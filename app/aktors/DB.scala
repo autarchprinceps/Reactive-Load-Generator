@@ -1,6 +1,7 @@
 package aktors
 
 import java.net.URL
+import java.util.function.Consumer
 
 import akka.actor.UntypedActor
 import aktors.messages._
@@ -44,23 +45,22 @@ class DB(database : String = "loadgen") extends UntypedActor {
 			,	"name" -> user.getName
 			,   "password" -> user.getPassword
 			)) }
-			case getCMD : DBGetCMD => getCMD.t match {
-				case DBGetCMD.Type.AllPlansForUser => {
-					testplancoll.find("user" `=` getCMD.id).foreach(planDocument => getSender().tell(convertPlan(planDocument), getSelf()))
-				}
-				case DBGetCMD.Type.AllRunsForPlan => {
-					testruncoll.find("testPlanId" `=` getCMD.id).foreach(runDocument => getSender().tell(convertRun(runDocument), getSelf()))
-				}
-				case DBGetCMD.Type.PlanByID => getSender().tell(getPlan(getCMD.id), getSelf())
-				case DBGetCMD.Type.RunByID => getSender().tell(getRun(getCMD.id), getSelf())
-				case DBGetCMD.Type.UserByID => getSender().tell(getUser(getCMD.id), getSelf())
-				case DBGetCMD.Type.RunRaws => {
-					val testrunobj = testruncoll.findOneByID(getCMD.id).get
-					val testrunF : Future[Testrun] = Future { convertRun(testrunobj) }
-					testrunobj.getAs[MongoDBList]("runs").get.foreach(obj => {
-						val raw = obj.asInstanceOf[BasicDBObject]
-						getSender().tell(new LoadWorkerRaw(testrunF, raw.getAs[Int]("iter").get, raw.getAs[Long]("start").get, raw.getAs[Long]("end").get), getSelf())
-					})
+			case getCMD : DBGetCMD => {
+				val function = (x:AnyRef) => if(getCMD.callback == null) getSender().tell(x, getSelf()) else getCMD.callback.accept(x)
+				getCMD.t match {
+					case DBGetCMD.Type.AllPlansForUser => testplancoll.find("user" `=` getCMD.id).foreach(planDocument => function(convertPlan(planDocument)))
+					case DBGetCMD.Type.AllRunsForPlan => testruncoll.find("testPlanId" `=` getCMD.id).foreach(runDocument => function(convertRun(runDocument)))
+					case DBGetCMD.Type.PlanByID => function(getPlan(getCMD.id))
+					case DBGetCMD.Type.RunByID => function(getRun(getCMD.id))
+					case DBGetCMD.Type.UserByID => function(getUser(getCMD.id))
+					case DBGetCMD.Type.RunRaws => {
+						val testrunobj = testruncoll.findOneByID(getCMD.id).get
+						val testrunF : Future[Testrun] = Future { convertRun(testrunobj) }
+						testrunobj.getAs[MongoDBList]("runs").get.foreach(obj => {
+							val raw = obj.asInstanceOf[BasicDBObject]
+							function(new LoadWorkerRaw(testrunF, raw.getAs[Int]("iter").get, raw.getAs[Long]("start").get, raw.getAs[Long]("end").get))
+						})
+					}
 				}
 			}
 			case query : DBQuery => query.t match {

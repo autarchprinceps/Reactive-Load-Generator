@@ -2,6 +2,8 @@ package aktors.messages;
 
 import org.bson.types.ObjectId;
 
+import java.util.function.Consumer;
+
 /**
  * Created by Patrick Robinson on 02.05.15.
  */
@@ -22,4 +24,5 @@ public class DBGetCMD {
 
 	public Type t;
     public ObjectId id;
+	public Consumer<Object> callback = null;
 }

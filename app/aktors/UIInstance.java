@@ -50,7 +50,7 @@ public class UIInstance extends UntypedActor {
 			String type = JSONHelper.JsStringToString(json.$bslash("type"));
 			System.out.println("DEBUG: UIInstance " + type);
 			switch(type) {
-				case "register":
+				case "register": // Tested
 					String name = JSONHelper.JsStringToString(json.$bslash("name"));
 					System.out.println("DEBUG: UIInstance Registering " + name);
 					User user = new User(
@@ -63,7 +63,7 @@ public class UIInstance extends UntypedActor {
 					ws(JSONHelper.simpleResponse("registered", "Registered " + name), getSelf());
 					System.out.println("DEBUG: UIInstance Registered " + name);
 					break;
-				case "login":
+				case "login": // Tested
 					System.out.println("DEBUG: UIInstance Logging in");
 					DBQuery dbQuery = new DBQuery();
 					dbQuery.t = DBQuery.Type.Login;
@@ -80,7 +80,7 @@ public class UIInstance extends UntypedActor {
 					ws(JSONHelper.simpleResponse("logout", "Logged out"), getSelf());
 					System.out.println("DEBUG: UIInstance Logged out");
 					break;
-				case "store plan":
+				case "store plan": // Tested
 					System.out.println("DEBUG: UIInstance Storing plan");
 					if (currentUser != null) {
 						Testplan tp = Testplan.fromJSON((JsObject) json.$bslash("testplan"));
@@ -95,24 +95,29 @@ public class UIInstance extends UntypedActor {
 				case "start run":
 					System.out.println("DEBUG: UIInstance Starting run");
 					if (currentUser != null) {
-						Testplan testplan = Testplan.fromJSON((JsObject) json.$bslash("testplan")); // TODO replace by DB lookup
-						testplan.setUser(currentUser);
-						ActorRef newRunner = as.actorOf(Props.create(
-							LoadRunner.class
-						,   as
-						,   testplan
-						,   db
-						,   as.actorOf(Props.create(RunnerConnector.class, websocket))
-						));
-						newRunner.tell(RunnerCMD.Start, getSelf()); // TODO seperate start necessary? depends on UI
-						running.add(newRunner);
+						DBGetCMD dbGetCMD3 = new DBGetCMD();
+						dbGetCMD3.t = DBGetCMD.Type.PlanByID;
+						dbGetCMD3.id = new ObjectId(JSONHelper.JsStringToString(json.$bslash("testplan")));
+
+						dbGetCMD3.callback = (testplan) -> {
+							ActorRef newRunner = as.actorOf(Props.create(
+								LoadRunner.class
+								, as
+								, testplan
+								, db
+								, as.actorOf(Props.create(RunnerConnector.class, websocket))
+							));
+							newRunner.tell(RunnerCMD.Start, getSelf()); // TODO seperate start necessary? depends on UI
+							running.add(newRunner);
+						};
+						db.tell(dbGetCMD3, getSelf());
 						System.out.println("DEBUG: UIInstance Started run");
 					} else {
 						ws(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
 						System.out.println("DEBUG: UIInstance NotAuth");
 					}
 					break;
-				case "all plans":
+				case "all plans": // Tested
 					System.out.println("DEBUG: UIInstance Getting all plans");
 					if (currentUser != null) {
 						DBGetCMD dbGetCMD2 = new DBGetCMD();
@@ -125,7 +130,7 @@ public class UIInstance extends UntypedActor {
 						System.out.println("DEBUG: UIInstance NotAuth");
 					}
 					break;
-				case "load plan": // TODO does not seem to work
+				case "load plan": // Tested (first part)
 					System.out.println("DEBUG: UIInstance Loading plan");
 					if(currentUser != null) {
 						DBGetCMD dbGetCMD = new DBGetCMD();
