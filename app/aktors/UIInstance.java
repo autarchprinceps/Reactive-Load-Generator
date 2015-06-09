@@ -25,11 +25,10 @@ public class UIInstance extends UntypedActor {
 	}
 
 	private final ActorRef websocket;
-	private final ActorSystem as; // TODO Future?
-	private final ActorRef db; // TODO Future?
+	private final ActorSystem as;
+	private final ActorRef db;
 
 	public UIInstance(ActorRef out, boolean testing) {
-		System.out.println("DEBUG: UIInstance new: " + out + " " + testing);
 		this.websocket = out;
 		as = ActorSystem.create();
 		db = as.actorOf(Props.create(DB.class, testing ? "junit_loadgen" : "loadgen"));
@@ -48,9 +47,8 @@ public class UIInstance extends UntypedActor {
 		if(message instanceof String) {
 			JsObject json = ((JsObject)Json.parse((String) message));
 			String type = JSONHelper.JsStringToString(json.$bslash("type"));
-			System.out.println("DEBUG: UIInstance " + type);
 			switch(type) {
-				case "register":
+				case "register": // Tested
 					DBQuery regQuery = new DBQuery();
 					regQuery.t = DBQuery.Type.Register;
 					regQuery.terms = new HashMap<>();
@@ -176,7 +174,7 @@ public class UIInstance extends UntypedActor {
 		} else if(message instanceof DBQuery) {
 			DBQuery queryResult = (DBQuery)message;
 			switch(queryResult.t) {
-				case Login:
+				case Login: // Tested
 					if(queryResult.flag) {
 						currentUser = (User)queryResult.result;
 						ws(JSONHelper.simpleResponse("login", "Login successful"), getSelf());
@@ -185,7 +183,7 @@ public class UIInstance extends UntypedActor {
 						ws(JSONHelper.simpleResponse("error", "Login failed: " + queryResult.result), getSelf());
 					}
 					break;
-				case Register:
+				case Register: // Tested
 					if(queryResult.flag) {
 						ws(JSONHelper.simpleResponse("register", "Register successful"), getSelf());
 					} else {
