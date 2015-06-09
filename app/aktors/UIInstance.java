@@ -92,7 +92,7 @@ public class UIInstance extends UntypedActor {
 						System.out.println("DEBUG: UIInstance NotAuth");
 					}
 					break;
-				case "start run":
+				case "start run": // Tested
 					System.out.println("DEBUG: UIInstance Starting run");
 					if (currentUser != null) {
 						DBGetCMD dbGetCMD3 = new DBGetCMD();
@@ -130,7 +130,7 @@ public class UIInstance extends UntypedActor {
 						System.out.println("DEBUG: UIInstance NotAuth");
 					}
 					break;
-				case "load plan": // Tested (first part)
+				case "load plan": // Tested (both parts)
 					System.out.println("DEBUG: UIInstance Loading plan");
 					if(currentUser != null) {
 						DBGetCMD dbGetCMD = new DBGetCMD();
@@ -148,7 +148,7 @@ public class UIInstance extends UntypedActor {
 						System.out.println("DEBUG: UIInstance NotAuth");
 					}
 					break;
-				case "load run":
+				case "load run": // Tested
 					System.out.println("DEBUG: UIInstance Loading run");
 					if(currentUser != null) {
 						DBGetCMD dbGetCMD1 = new DBGetCMD();
@@ -211,9 +211,6 @@ public class UIInstance extends UntypedActor {
 
 	@Override
 	public void postStop() throws Exception {
-		// TODO How is UIInstance closed? WebSocket.onclose?
-		System.out.println("DEBUG: UIInstance DB closing");
 		db.tell("close", getSelf());
-		System.out.println("DEBUG: UIInstance DB closed");
 	}
 }
