@@ -50,28 +50,21 @@ public class UIInstance extends UntypedActor {
 			String type = JSONHelper.JsStringToString(json.$bslash("type"));
 			System.out.println("DEBUG: UIInstance " + type);
 			switch(type) {
-				case "register": // Tested
-					String name = JSONHelper.JsStringToString(json.$bslash("name"));
-					System.out.println("DEBUG: UIInstance Registering " + name);
-					User user = new User(
-						new ObjectId()
-					,   name
-					,   JSONHelper.JsStringToString(json.$bslash("password"))
-					);
-					System.out.println("DEBUG: UIInstance created user " + user.toJSON(true).toString());
-					db.tell(user, getSelf());
-					ws(JSONHelper.simpleResponse("registered", "Registered " + name), getSelf());
-					System.out.println("DEBUG: UIInstance Registered " + name);
+				case "register":
+					DBQuery regQuery = new DBQuery();
+					regQuery.t = DBQuery.Type.Register;
+					regQuery.terms = new HashMap<>();
+					regQuery.terms.put("name", JSONHelper.JsStringToString(json.$bslash("name")));
+					regQuery.terms.put("password", JSONHelper.JsStringToString(json.$bslash("password")));
+					db.tell(regQuery, getSelf());
 					break;
 				case "login": // Tested
-					System.out.println("DEBUG: UIInstance Logging in");
 					DBQuery dbQuery = new DBQuery();
 					dbQuery.t = DBQuery.Type.Login;
 					dbQuery.terms = new HashMap<>();
 					dbQuery.terms.put("name", JSONHelper.JsStringToString(json.$bslash("name")));
 					dbQuery.terms.put("password", JSONHelper.JsStringToString(json.$bslash("password")));
 					db.tell(dbQuery, getSelf());
-					System.out.println("DEBUG: UIInstance Logged in");
 					break;
 				case "logout":
 					System.out.println("DEBUG: UIInstance Logging out");
@@ -164,42 +157,39 @@ public class UIInstance extends UntypedActor {
 				default:
 					websocket.tell("Wrong type: " + type, getSelf());
 					websocket.tell(json.fields().toString(), getSelf());
-					System.out.println("DEBUG: UIInstance Wrong type: " + type);
+					System.err.println("ERROR: UIInstance Wrong type: " + type);
 					// throw new Exception("Wrong input to WebSocket");
 					break;
 			}
 		} else if(message instanceof Testrun) {
-			System.out.println("DEBUG: UIInstance Testrun getting");
 			if(currentUser != null) {
 				ws(JSONHelper.objectResponse("testrun", ((Testrun) message).toJSON()), getSelf());
-				System.out.println("DEBUG: UIInstance Testrun got");
 			} else {
 				ws(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
-				System.out.println("DEBUG: UIInstance NotAuth");
 			}
 		} else if(message instanceof Testplan) {
-			System.out.println("DEBUG: UIInstance Testplan getting");
 			if(currentUser != null) {
 				ws(JSONHelper.objectResponse("testplan", ((Testplan) message).toJSON()), getSelf());
-				System.out.println("DEBUG: UIInstance Testplan got");
 			} else {
 				ws(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
-				System.out.println("DEBUG: UIInstance NotAuth");
 			}
 		} else if(message instanceof DBQuery) {
-			System.out.println("DEBUG: UIInstance DBQuery getting");
 			DBQuery queryResult = (DBQuery)message;
 			switch(queryResult.t) {
 				case Login:
-					System.out.println("DEBUG: UIInstance DBQuery login got");
 					if(queryResult.flag) {
 						currentUser = (User)queryResult.result;
 						ws(JSONHelper.simpleResponse("login", "Login successful"), getSelf());
-						System.out.println("DEBUG: UIInstance Login succ");
 					} else {
 						currentUser = null;
-						ws(JSONHelper.simpleResponse("error", "Login failed"), getSelf());
-						System.out.println("DEBUG: UIInstance Login failed");
+						ws(JSONHelper.simpleResponse("error", "Login failed: " + queryResult.result), getSelf());
+					}
+					break;
+				case Register:
+					if(queryResult.flag) {
+						ws(JSONHelper.simpleResponse("register", "Register successful"), getSelf());
+					} else {
+						ws(JSONHelper.simpleResponse("error", "Register failed: " + queryResult.result), getSelf());
 					}
 					break;
 			}

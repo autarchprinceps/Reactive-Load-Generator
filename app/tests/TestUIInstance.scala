@@ -76,6 +76,7 @@ class TestUIInstance {
 
 	def testNotAuth = {
 		// TODO
+		// TODO wrong authentication
 	}
 
 	def testRegLogin = {

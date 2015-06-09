@@ -27,7 +27,7 @@ class DB(database : String = "loadgen") extends UntypedActor {
 				val query = MongoDBObject("_id" -> workerraw.getTestrun.getID)
 				val run = MongoDBObject("start" -> workerraw.getStart, "end" -> workerraw.getEnd, "iter" -> workerraw.getIterOnWorker)
 				val update = $push("runs" -> run)
-				testruncoll.update(query, update) // TODO imperformant?
+				testruncoll.update(query, update, concern = WriteConcern.Unacknowledged)
 			}
 			case trun : Testrun => Future { testruncoll.insert(MongoDBObject("_id" -> trun.getID, "testPlanId" -> trun.getTestplan.getID)) }
 			case tplan : Testplan => Future { testplancoll.insert(MongoDBObject(
@@ -39,11 +39,6 @@ class DB(database : String = "loadgen") extends UntypedActor {
 			,	"waitBeforeStart" -> tplan.getWaitBeforeStart
 			,	"connectionType" -> tplan.getConnectionType.toString
 			,	"user" -> tplan.getUser.getID
-			)) }
-			case user : User => Future { usercoll.insert(MongoDBObject( // TODO !! what if user exists already?
-				"_id" -> user.getID
-			,	"name" -> user.getName
-			,   "password" -> user.getPassword
 			)) }
 			case getCMD : DBGetCMD => {
 				val function = (x:AnyRef) => if(getCMD.callback == null) getSender().tell(x, getSelf()) else getCMD.callback.accept(x)
@@ -68,6 +63,7 @@ class DB(database : String = "loadgen") extends UntypedActor {
 					val result = usercoll.findOne(MongoDBObject("name" -> query.terms.get("name"))).getOrElse(null) // TODO no user -> None.get, FIX: if None -> flag = false else get
 					if(result == null) {
 						query.flag = false
+						query.result = "No such user"
 					} else {
 						val user = new User(
 							result.getAs[ObjectId]("_id").get
@@ -75,7 +71,21 @@ class DB(database : String = "loadgen") extends UntypedActor {
 							, result.getAs[String]("password").get
 						)
 						query.flag = user.check(query.terms.get("password"))
-						if (query.flag) query.result = user
+						query.result = if (query.flag) user else "Wrong password"
+					}
+					getSender.tell(query, getSelf)
+				}
+				case DBQuery.Type.Register => {
+					val result = usercoll.findOne(MongoDBObject("name" -> query.terms.get("name"))).getOrElse(null)
+					query.flag = result == null
+					if(query.flag) {
+						usercoll.insert(MongoDBObject(
+							"_id" -> new ObjectId
+							, "name" -> query.terms.get("name")
+							, "password" -> query.terms.get("password")
+						), WriteConcern.Journaled)
+					} else {
+						query.result = "User with this name exists"
 					}
 					getSender.tell(query, getSelf)
 				}

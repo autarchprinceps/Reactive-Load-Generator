@@ -7,7 +7,7 @@ import java.util.Map;
  */
 public class DBQuery {
 	public enum Type {
-		Login
+		Login, Register
 	}
 
 	public Type t;
