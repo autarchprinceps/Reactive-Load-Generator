@@ -47,9 +47,6 @@ class TestUIInstance {
 
 	def apply() : util.List[String] = {
 		println("TestUIInstance start")
-		testNotAuth
-		println("TestUIInstance testNotAuth")
-		Thread.sleep(2000)
 		testRegLogin
 		println("TestUIInstance testRegLogin")
 		Thread.sleep(2000)
@@ -74,11 +71,6 @@ class TestUIInstance {
 		return problems
 	}
 
-	def testNotAuth = {
-		// TODO
-		// TODO wrong authentication
-	}
-
 	def testRegLogin = {
 		val alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 		val names = new ArrayBuffer[String]()
@@ -95,7 +87,7 @@ class TestUIInstance {
 				, ("name", JsString(name))
 				, ("password", JsString(password))
 			))
-			if (!answerCheckType("registered")) problems.add(Test.problem(new Exception().getStackTrace()(0), "Register failed: " + i + " " + name + " " + password))
+			if (!answerCheckType("register")) problems.add(Test.problem(new Exception().getStackTrace()(0), "Register failed: " + i + " " + name + " " + password))
 			names += name
 			passwords += password
 		}
@@ -107,14 +99,14 @@ class TestUIInstance {
 			,	("password", JsString(passwords(i)))
 			))
 			if(!answerCheckType("login")) problems.add(Test.problem(new Exception().getStackTrace()(0), "Login failed: " + i + " " + names(i) + " " + passwords(i)))
-			// TODO check authenticated
 			ws(List(
 				("type", JsString("logout"))
 			,	("name", JsString(names(i)))
 			,	("password", JsString(passwords(i)))
 			))
 			if(!answerCheckType("logout")) problems.add(Test.problem(new Exception().getStackTrace()(0), "Logout failed: " + i + " " + names(i) + " " + passwords(i)))
-			// TODO check not auth
+			// TODO checkNotAuthenticated
+			// TODO wrong authentication
 		}
 
 		ws(List(
@@ -123,7 +115,6 @@ class TestUIInstance {
 		,	("password", JsString("test"))
 		))
 		if(!answerCheckType("registered")) problems.add(Test.problem(new Exception().getStackTrace()(0), "Register failed: test test"))
-		Thread.sleep(500)
 		ws(List(
 			("type", JsString("login"))
 		,	("name", JsString("test"))

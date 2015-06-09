@@ -60,7 +60,7 @@ class DB(database : String = "loadgen") extends UntypedActor {
 			}
 			case query : DBQuery => query.t match {
 				case DBQuery.Type.Login => {
-					val result = usercoll.findOne(MongoDBObject("name" -> query.terms.get("name"))).getOrElse(null) // TODO no user -> None.get, FIX: if None -> flag = false else get
+					val result = usercoll.findOne(MongoDBObject("name" -> query.terms.get("name"))).getOrElse(null)
 					if(result == null) {
 						query.flag = false
 						query.result = "No such user"
@@ -118,7 +118,6 @@ class DB(database : String = "loadgen") extends UntypedActor {
 		}
 
 		def getUser(id : ObjectId) : User = {
-			// TODO cache?
 			val userDocument = usercoll.findOneByID(id).get
 			return new User(
 				id
@@ -126,8 +125,7 @@ class DB(database : String = "loadgen") extends UntypedActor {
 			,	userDocument.getAs[String]("password").get
 			)
 		}
-
-		// TODO utilise currentuser, when account subsystem is implemented?
+		
 		def convertPlan(document : testplancoll.T) : Testplan = new Testplan(
 			User = Future { getUser(document.getAs[ObjectId]("user").get) },
 			ID = document.getAs[ObjectId]("_id").get,
