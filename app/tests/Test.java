@@ -84,8 +84,7 @@ public class Test {
 			// insert runs
 			plans.stream().forEach(testplan1 -> {
 				for (int i = 0; i < 3; i++) {
-					Testrun tmp = new Testrun(new ObjectId(), null, null);
-					tmp.setTestplan(testplan1);
+					Testrun tmp = new Testrun(new ObjectId(), null, testplan1);
 					inbox.send(db_ref, tmp);
 					runs.add(tmp);
 				}

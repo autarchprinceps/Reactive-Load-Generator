@@ -98,7 +98,6 @@ public class UIInstance extends UntypedActor {
 						DBGetCMD dbGetCMD3 = new DBGetCMD();
 						dbGetCMD3.t = DBGetCMD.Type.PlanByID;
 						dbGetCMD3.id = new ObjectId(JSONHelper.JsStringToString(json.$bslash("testplan")));
-
 						dbGetCMD3.callback = (testplan) -> {
 							ActorRef newRunner = as.actorOf(Props.create(
 								LoadRunner.class

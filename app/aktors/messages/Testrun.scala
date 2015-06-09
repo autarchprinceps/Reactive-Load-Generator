@@ -26,6 +26,8 @@ object Testrun {
 }
 
 class Testrun(ID: ObjectId = new ObjectId, Subscribers: List[ActorRef] = new util.ArrayList[ActorRef](), Testplan: Future[Testplan] = null) {
+	def this(ID:ObjectId, Subscribers: List[ActorRef], Testplan:Testplan) = this(ID, Subscribers, Future {Testplan})
+
 	var _testplan: Future[Testplan] = Testplan
 
 	def getID: ObjectId = ID
