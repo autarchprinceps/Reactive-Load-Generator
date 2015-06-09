@@ -65,14 +65,18 @@ class DB(database : String = "loadgen") extends UntypedActor {
 			}
 			case query : DBQuery => query.t match {
 				case DBQuery.Type.Login => {
-					val result = usercoll.findOne(MongoDBObject("name" -> query.terms.get("name"))).get
-					val user = new User(
-						result.getAs[ObjectId]("_id").get
-					,   result.getAs[String]("name").get
-					,   result.getAs[String]("password").get
-					)
-					query.flag = user.check(query.terms.get("password"))
-					if(query.flag) query.result = user
+					val result = usercoll.findOne(MongoDBObject("name" -> query.terms.get("name"))).getOrElse(null) // TODO no user -> None.get, FIX: if None -> flag = false else get
+					if(result == null) {
+						query.flag = false
+					} else {
+						val user = new User(
+							result.getAs[ObjectId]("_id").get
+							, result.getAs[String]("name").get
+							, result.getAs[String]("password").get
+						)
+						query.flag = user.check(query.terms.get("password"))
+						if (query.flag) query.result = user
+					}
 					getSender.tell(query, getSelf)
 				}
 				case _ => return

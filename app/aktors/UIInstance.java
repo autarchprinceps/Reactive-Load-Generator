@@ -99,6 +99,7 @@ public class UIInstance extends UntypedActor {
 						dbGetCMD3.t = DBGetCMD.Type.PlanByID;
 						dbGetCMD3.id = new ObjectId(JSONHelper.JsStringToString(json.$bslash("testplan")));
 						dbGetCMD3.callback = (testplan) -> {
+							System.out.println("DEBUG UIIn WS: " + websocket.toString());
 							ActorRef newRunner = as.actorOf(Props.create(
 								LoadRunner.class
 								, as

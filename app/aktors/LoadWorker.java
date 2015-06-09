@@ -39,21 +39,13 @@ public class LoadWorker extends UntypedActor {
                 }
                 for (int i = 0; i < plan.getNumRuns(); i++) {
                     long start = System.currentTimeMillis();
-
-
                     // HTTP GET Request
                     try {
                     	HttpURLConnection connection = null;
                     	URL url = plan.getPath();
-
                     	connection = (HttpURLConnection)url.openConnection();
-
                     	connection.setRequestMethod("GET");
-
                     	int responseCode = connection.getResponseCode();
-                    	System.out.println("\nSending 'GET' request to URL : " + url);
-                    	System.out.println("Response Code : " + responseCode);
-
                     	BufferedReader in = new BufferedReader(
                     			new InputStreamReader(connection.getInputStream()));
                     	String inputLine;
@@ -63,15 +55,11 @@ public class LoadWorker extends UntypedActor {
                     		response.append(inputLine);
                     	}
                     	in.close();
-
-                    	//print result
-                    	System.out.println(response.toString());
                     } catch (Exception e1) {
                     	// TODO Auto-generated catch block
                     	e1.printStackTrace();
                     }
 	                LoadWorkerRaw msg = new LoadWorkerRaw(init, i, start, System.currentTimeMillis());
-	                System.out.println("Loadworker performing the actual test");
 
                     init.getSubscribers().parallelStream().forEach((actorRef -> actorRef.tell(msg, getSelf())));
                     if (plan.getWaitBetweenMsgs() > 0) {

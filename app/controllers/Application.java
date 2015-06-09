@@ -46,9 +46,7 @@ public class Application extends Controller {
 
         //create test testplan and run
         Testplan myTestplan = new Testplan(new ObjectId(), 1, 1, new URL("http://www.google.de"), 0, 0, ConnectionType.HTTP, null);
-
-        Testrun myTestrun = new Testrun(new ObjectId(), new ArrayList<ActorRef>(), null);
-        myTestrun.setTestplan(myTestplan);
+        Testrun myTestrun = new Testrun(new ObjectId(), new ArrayList<ActorRef>(), myTestplan);
 
         //let loadworker work
         loadworker.tell(myTestrun, ActorRef.noSender());

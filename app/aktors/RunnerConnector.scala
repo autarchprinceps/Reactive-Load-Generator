@@ -14,8 +14,8 @@ private object RunnerConnector {
 private class RunnerConnector(out : ActorRef) extends UntypedActor {
 	@throws[Exception](classOf[Exception])
 	override def onReceive(message: Any): Unit = message match {
-		case raw : LoadWorkerRaw => out.tell(JSONHelper.objectResponse("raw", raw.toJSON(false)), getSelf) // TODO FIX not receiving, why?
-		case run : Testrun => out.tell(JSONHelper.objectResponse("runstart", run.toJSON(true)), getSelf)
+		case raw : LoadWorkerRaw => out.tell(JSONHelper.objectResponse("raw", raw.toJSON(false)).toString, getSelf)
+		case run : Testrun => out.tell(JSONHelper.objectResponse("runstart", run.toJSON(true)).toString, getSelf)
 		case _ => unhandled(message)
 	}
 }

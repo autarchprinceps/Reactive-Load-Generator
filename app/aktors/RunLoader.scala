@@ -14,9 +14,9 @@ private object RunLoader {
 private class RunLoader(out : ActorRef, db: ActorRef) extends UntypedActor {
 	@throws[Exception](classOf[Exception])
 	override def onReceive(message: Any): Unit = message match {
-		case raw : LoadWorkerRaw => out.tell(JSONHelper.objectResponse("raw", (message.asInstanceOf[LoadWorkerRaw]).toJSON(false)), getSelf)
+		case raw : LoadWorkerRaw => out.tell(JSONHelper.objectResponse("raw", (message.asInstanceOf[LoadWorkerRaw]).toJSON(false)).toString, getSelf)
 		case testrun : Testrun => {
-			out.tell(JSONHelper.objectResponse("testrun", testrun.toJSON), getSelf)
+			out.tell(JSONHelper.objectResponse("testrun", testrun.toJSON).toString, getSelf)
 			val dbGetCMD: DBGetCMD = new DBGetCMD
 			dbGetCMD.t = DBGetCMD.Type.RunRaws
 			dbGetCMD.id = testrun.getID
