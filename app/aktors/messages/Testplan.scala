@@ -18,12 +18,15 @@ object Testplan {
 	@throws(classOf[MalformedURLException])
 	def fromJSON(plan: JsObject): Testplan = new Testplan(
 		ID = if(plan.\("id").isInstanceOf[JsString]) new ObjectId(JSONHelper.JsStringToString(plan.\("id"))) else new ObjectId,
+		NumRuns = plan.\("numRuns").asInstanceOf[JsNumber].value.intValue,
+		Parallelity = plan.\("parallelity").asInstanceOf[JsNumber].value.intValue,
 		Path = new URL(JSONHelper.JsStringToString(plan.\("path"))),
-		ConType =ConnectionType.valueOf(JSONHelper.JsStringToString(plan.\("connectionType"))),
-		NumRuns = (plan.\("numRuns").asInstanceOf[JsNumber]).value.intValue,
-		Parallelity = (plan.\("parallelity").asInstanceOf[JsNumber]).value.intValue,
-		WaitBetweenMsgs = if (plan.\("waitBetweenMsgs").isInstanceOf[JsNumber]) (plan.\("waitBetweenMsgs").asInstanceOf[JsNumber]).value.intValue else 0,
+		WaitBetweenMsgs = plan.\("waitBetweenMsgs") match {
+			case number: JsNumber => number.value.intValue
+			case _ => 0
+		},
 		WaitBeforeStart = if (plan.\("waitBeforeStart").isInstanceOf[JsNumber]) (plan.\("waitBeforeStart").asInstanceOf[JsNumber]).value.intValue else 0,
+		ConType =ConnectionType.valueOf(JSONHelper.JsStringToString(plan.\("connectionType"))),
 		User = Future { if(plan.\("user").isInstanceOf[JsObject]) User.fromJSON(plan.\("user").asInstanceOf[JsObject]) else null }
 	)
 }
@@ -42,7 +45,7 @@ class Testplan(
 
 	override def equals(other: Any): Boolean = other match {
 		case that: Testplan => this.getID.equals(that.getID)
-		case json: JsObject => new ObjectId(JSONHelper.JsStringToString((json.\("id")))).equals(this.getID)
+		case json: JsObject => new ObjectId(JSONHelper.JsStringToString(json.\("id"))).equals(this.getID)
 		case _ => false
 	}
 

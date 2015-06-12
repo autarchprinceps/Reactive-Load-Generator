@@ -15,7 +15,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
 object LoadWorkerRaw {
 	@throws(classOf[MalformedURLException])
 	def fromJSON(raw: JsObject): LoadWorkerRaw = new LoadWorkerRaw(
-		Future {if(raw.\("testrun").isInstanceOf[JsObject]) Testrun.fromJSON(raw.\("testrun").asInstanceOf[JsObject]) else null}
+		Future {raw.\("testrun") match {
+			case run: JsObject => Testrun.fromJSON(run)
+			case _ => null
+		}}
 	,	raw.\("iterOnWorker").asInstanceOf[JsNumber].value.intValue
 	,   raw.\("start").asInstanceOf[JsNumber].value.intValue
 	,   raw.\("end").asInstanceOf[JsNumber].value.intValue
@@ -48,5 +51,5 @@ class LoadWorkerRaw(Testrun: Future[Testrun], IterOnWorker : Int, StartTime : Lo
 		case _ => false
 	}
 
-	override def hashCode(): Int = Seq(getTestrun, getIterOnWorker, getStart, getEnd).map(_.hashCode()).fold(0)((a,b) => a + b)
+	override def hashCode(): Int = Seq(getTestrun, getIterOnWorker, getStart, getEnd).map(_.hashCode()).sum // .fold(0)((a,b) => a + b)
 }

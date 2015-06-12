@@ -1,13 +1,14 @@
 package aktors
 
 import java.net.URL
-import java.util.function.Consumer
 
 import akka.actor.UntypedActor
 import aktors.messages._
 import com.mongodb.casbah.Imports._
-import scala.concurrent.ExecutionContext.Implicits.global
+import play.api.libs.json.{Json, JsArray, JsString, JsValue}
 
+import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 /**
@@ -40,27 +41,34 @@ class DB(database : String = "loadgen") extends UntypedActor {
 			,	"connectionType" -> tplan.getConnectionType.toString
 			,	"user" -> tplan.getUser.getID
 			)) }
-			case getCMD : DBGetCMD => {
+			case getCMD : DBGetCMD =>
 				val function = (x:AnyRef) => if(getCMD.callback == null) getSender().tell(x, getSelf()) else getCMD.callback.accept(x)
 				getCMD.t match {
-					case DBGetCMD.Type.AllPlansForUser => testplancoll.find("user" `=` getCMD.id).foreach(planDocument => function(convertPlan(planDocument)))
+					case DBGetCMD.Type.AllPlansForUser => {
+						val result = new ArrayBuffer[JsValue]
+						testplancoll.find("user" `=` getCMD.id).foreach(planDocument => result += convertPlan(planDocument).toJSON(false))
+						function(
+							Json.obj(
+								"type" -> JsString("all plans")
+							,	"content" -> JsArray(result)
+							)
+						)
+					}
 					case DBGetCMD.Type.AllRunsForPlan => testruncoll.find("testPlanId" `=` getCMD.id).foreach(runDocument => function(convertRun(runDocument)))
 					case DBGetCMD.Type.PlanByID => function(getPlan(getCMD.id))
 					case DBGetCMD.Type.RunByID => function(getRun(getCMD.id))
 					case DBGetCMD.Type.UserByID => function(getUser(getCMD.id))
-					case DBGetCMD.Type.RunRaws => {
+					case DBGetCMD.Type.RunRaws =>
 						val testrunobj = testruncoll.findOneByID(getCMD.id).get
 						val testrunF : Future[Testrun] = Future { convertRun(testrunobj) }
 						testrunobj.getAs[MongoDBList]("runs").get.foreach(obj => {
 							val raw = obj.asInstanceOf[BasicDBObject]
 							function(new LoadWorkerRaw(testrunF, raw.getAs[Int]("iter").get, raw.getAs[Long]("start").get, raw.getAs[Long]("end").get))
 						})
-					}
 				}
-			}
 			case query : DBQuery => query.t match {
-				case DBQuery.Type.Login => {
-					val result = usercoll.findOne(MongoDBObject("name" -> query.terms.get("name"))).getOrElse(null)
+				case DBQuery.Type.Login =>
+					val result = usercoll.findOne(MongoDBObject("name" -> query.terms.get("name"))).orNull
 					if(result == null) {
 						query.flag = false
 						query.result = "No such user"
@@ -74,9 +82,8 @@ class DB(database : String = "loadgen") extends UntypedActor {
 						query.result = if (query.flag) user else "Wrong password"
 					}
 					getSender.tell(query, getSelf)
-				}
-				case DBQuery.Type.Register => {
-					val result = usercoll.findOne(MongoDBObject("name" -> query.terms.get("name"))).getOrElse(null)
+				case DBQuery.Type.Register =>
+					val result = usercoll.findOne(MongoDBObject("name" -> query.terms.get("name"))).orNull
 					query.flag = result == null
 					if(query.flag) {
 						usercoll.insert(MongoDBObject(
@@ -88,30 +95,26 @@ class DB(database : String = "loadgen") extends UntypedActor {
 						query.result = "User with this name exists"
 					}
 					getSender.tell(query, getSelf)
-				}
 				case _ => return
 			}
-			case del : DBDelCMD => {
+			case del : DBDelCMD =>
 				var coll = usercoll
 				del.t match {
 					case DBDelCMD.Type.Plan => coll = testplancoll
 					case DBDelCMD.Type.Run => coll = testruncoll
 					case DBDelCMD.Type.User => coll = usercoll
-					case DBDelCMD.Type.DB => {
+					case DBDelCMD.Type.DB =>
 						testruncoll.drop
 						testplancoll.drop
 						usercoll.drop
 						return
-					}
 					case _ => return
 				}
 				coll.findAndRemove(MongoDBObject("_id" -> del.id))
-			}
 			case simple : String => simple match {
-				case "close" => {
+				case "close" =>
 					client.close()
-					// DEBUG deadletters getContext.stop(getSelf)
-				}
+					// TODO DEBUG deadletters getContext.stop(getSelf)
 				case _ => unhandled(message)
 			}
 			case _ => unhandled(message)
@@ -125,7 +128,7 @@ class DB(database : String = "loadgen") extends UntypedActor {
 			,	userDocument.getAs[String]("password").get
 			)
 		}
-		
+
 		def convertPlan(document : testplancoll.T) : Testplan = new Testplan(
 			User = Future { getUser(document.getAs[ObjectId]("user").get) },
 			ID = document.getAs[ObjectId]("_id").get,

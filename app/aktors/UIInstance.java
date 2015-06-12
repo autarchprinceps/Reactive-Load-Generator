@@ -7,9 +7,13 @@ import akka.actor.UntypedActor;
 import aktors.messages.*;
 import helper.JSONHelper;
 import org.bson.types.ObjectId;
+import play.api.libs.json.JsArray;
+import play.api.libs.json.JsArray$;
 import play.api.libs.json.JsObject;
 import play.api.libs.json.Json;
+import scala.collection.mutable.ArrayBuffer;
 
+import javax.smartcardio.TerminalFactorySpi;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -171,6 +175,8 @@ public class UIInstance extends UntypedActor {
 			} else {
 				ws(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
 			}
+		} else if(message instanceof JsObject) {
+			ws((JsObject)message, getSelf());
 		} else if(message instanceof DBQuery) {
 			DBQuery queryResult = (DBQuery)message;
 			switch(queryResult.t) {
