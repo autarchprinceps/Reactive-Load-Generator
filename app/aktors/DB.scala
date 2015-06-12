@@ -54,7 +54,17 @@ class DB(database : String = "loadgen") extends UntypedActor {
 							)
 						)
 					}
-					case DBGetCMD.Type.AllRunsForPlan => testruncoll.find("testPlanId" `=` getCMD.id).foreach(runDocument => function(convertRun(runDocument)))
+					case DBGetCMD.Type.AllRunsForPlan => {
+						val result = new ArrayBuffer[JsValue]
+						testruncoll.find("testPlanId" `=` getCMD.id).foreach(runDocument => result += convertRun(runDocument).toJSON(false))
+						function(
+							Json.obj(
+								"type" -> JsString("all runs")
+							,   "testplan" -> JsString(getCMD.id.toString)
+							,   "content" -> JsArray(result)
+							)
+						)
+					}
 					case DBGetCMD.Type.PlanByID => function(getPlan(getCMD.id))
 					case DBGetCMD.Type.RunByID => function(getRun(getCMD.id))
 					case DBGetCMD.Type.UserByID => function(getUser(getCMD.id))
