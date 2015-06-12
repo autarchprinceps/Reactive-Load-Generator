@@ -80,7 +80,7 @@ public class UIInstance extends UntypedActor {
 					if (currentUser != null) {
 						Testplan tp = Testplan.fromJSON((JsObject) json.$bslash("testplan"));
 						tp.setUser(currentUser);
-						db.tell(tp, getSelf()); // TODO OK response necessary?
+						db.tell(tp, getSelf());
 						System.out.println("DEBUG: UIInstance Stored plan");
 					} else {
 						ws(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());

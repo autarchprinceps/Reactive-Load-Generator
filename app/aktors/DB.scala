@@ -32,17 +32,22 @@ class DB(database : String = "loadgen") extends UntypedActor {
 			}
 			case trun : Testrun => Future { testruncoll.insert(MongoDBObject("_id" -> trun.getID, "testPlanId" -> trun.getTestplan.getID)) }
 			case tplan : Testplan => Future { testplancoll.insert(MongoDBObject(
-				"_id" -> tplan.getID
-			,	"numRuns" -> tplan.getNumRuns
-			,	"parallelity" -> tplan.getParallelity
-			,	"path" -> tplan.getPath.toString
-			,	"waitBetweenMsgs" -> tplan.getWaitBetweenMsgs
-			,	"waitBeforeStart" -> tplan.getWaitBeforeStart
-			,	"connectionType" -> tplan.getConnectionType.toString
-			,	"user" -> tplan.getUser.getID
-			)) }
+					"_id" -> tplan.getID
+				,	"numRuns" -> tplan.getNumRuns
+				,	"parallelity" -> tplan.getParallelity
+				,	"path" -> tplan.getPath.toString
+				,	"waitBetweenMsgs" -> tplan.getWaitBetweenMsgs
+				,	"waitBeforeStart" -> tplan.getWaitBeforeStart
+				,	"connectionType" -> tplan.getConnectionType.toString
+				,	"user" -> tplan.getUser.getID
+				), WriteConcern.Journaled)
+				getSender.tell(Json.obj(
+					"type" -> JsString("stored plan")
+				,   "id" -> JsString(tplan.getID.toString)
+				), getSelf)
+			}
 			case getCMD : DBGetCMD =>
-				val function = (x:AnyRef) => if(getCMD.callback == null) getSender().tell(x, getSelf()) else getCMD.callback.accept(x)
+				val function = (x:AnyRef) => if(getCMD.callback == null) getSender.tell(x, getSelf) else getCMD.callback.accept(x)
 				getCMD.t match {
 					case DBGetCMD.Type.AllPlansForUser => {
 						val result = new ArrayBuffer[JsValue]
