@@ -176,7 +176,8 @@ public class UIInstance extends UntypedActor {
 				ws(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
 			}
 		} else if(message instanceof JsObject) {
-			ws((JsObject)message, getSelf());
+			System.out.println("DEBUG UII Forwarding message: " + ((JsObject)message).toString());
+			ws((JsObject) message, getSelf());
 		} else if(message instanceof DBQuery) {
 			DBQuery queryResult = (DBQuery)message;
 			switch(queryResult.t) {

@@ -31,7 +31,8 @@ class DB(database : String = "loadgen") extends UntypedActor {
 				testruncoll.update(query, update, concern = WriteConcern.Unacknowledged)
 			}
 			case trun : Testrun => Future { testruncoll.insert(MongoDBObject("_id" -> trun.getID, "testPlanId" -> trun.getTestplan.getID)) }
-			case tplan : Testplan => Future { testplancoll.insert(MongoDBObject(
+			case tplan : Testplan => {
+				testplancoll.insert(MongoDBObject(
 					"_id" -> tplan.getID
 				,	"numRuns" -> tplan.getNumRuns
 				,	"parallelity" -> tplan.getParallelity
@@ -41,10 +42,12 @@ class DB(database : String = "loadgen") extends UntypedActor {
 				,	"connectionType" -> tplan.getConnectionType.toString
 				,	"user" -> tplan.getUser.getID
 				), WriteConcern.Journaled)
-				getSender.tell(Json.obj(
+				val returnReceit = Json.obj(
 					"type" -> JsString("stored plan")
 				,   "id" -> JsString(tplan.getID.toString)
-				), getSelf)
+				)
+				println("DEBUG: DB stored plan: " + returnReceit.toString)
+				getSender.tell(returnReceit, getSelf)
 			}
 			case getCMD : DBGetCMD =>
 				val function = (x:AnyRef) => if(getCMD.callback == null) getSender.tell(x, getSelf) else getCMD.callback.accept(x)
