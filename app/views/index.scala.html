@@ -4,39 +4,242 @@
 
 
 <div id="container">
-<div id="header"><h1>Load Generator Akka Play</h1></div>
-  <div id="wrapper">
-    <div id="content">      
-	  <p><form>
-        <p>Target:<br>
-			<select>
-            <option value="server1">Server 1</option>
-            <option value="server2">Server 2</option>
-            <option value="server3">Server 3</option>
-            <option value="server4">Server 4</option>
-			</select>
-		</p> 
-        <br>
-        <p>How much load? (total Requests): <br>
-        <input type="text" name="load">
-		<form method="POST" action="@routes.Application.startTest()">
-			<button>Start Test</button>
-		</form>
-		</p>
-        
-    </form> </p>
-	
-	<br><br>
+  <div id="header"><h1>Load Generator Akka Play</h1></div>
+    <div id="wrapper">
+	  <div id="content">      
+		  <p>
+		    <p><h2>Testplan</h2></p>
+		    <table>			  
+			  <tr><td>
+			  Target URI: <td><input type="text" id ="targetURI" name="targetURI">
+			  <tr><td>
+			  Requests: <td> <input type="text" id ="requests" name="requests">
+			  <tr><td>
+			  Parallelity: <td> <input type="text" id ="parallelity" name="parallelity">
+			  <tr><td>
+			  Wait between Messages: <td> <input type="text" id ="waitBetweenMessages" name="waitBetweenMessages">
+			  <tr><td>
+			  Wait before Start: <td> <input type="text" id ="waitBeforeStart" name="waitBeforeStart">
+			  <tr><td>
+			  TestID: <td> <input type="text" id ="testID" name="testID" disabled>
+			</table>   
+			<br>
+			
+			  <input id="saveTestplan" type="button" value="Store as new" onclick="saveTestplan();" />
+			  <input id="runTetstplan" type="button" value="Run" onclick="runTestplan();" disabled/>
+			
+		  </p>		
+		  <br><br>
+		  <p>
+		    ##Result Stuff goes here##
+		  </p>
+      </div>	  
+	</div>
+	<div id="navigation">
+    <p><strong>Stored Testplans</strong></p>
     
-	
-	
-    </div>
   </div>
-  <div id="footer">
-    <p>Alex Laitenberger & Patrick Robinson at Web Engineering Hochschule Bonn Rhein-Sieg</p>
+  <div id="extra">
+    <p><strong>Stored Runs</strong></p>
+    
   </div>
+    <div id="footer">
+		<p>Alex Laitenberger & Patrick Robinson at Web Engineering Hochschule Bonn Rhein-Sieg</p>
+	</div>
 </div>
 
+
+<script type="text/javascript">
+
+
+	
+
+	function disableRun()
+	{
+		document.getElementById('runTetstplan').disabled = true;
+		document.getElementById('testID').value = "";
+	}
+
+	//configure inputs to disable run when changed:
+	document.getElementById('targetURI').onchange = function(){ disableRun();};
+	document.getElementById('requests').onchange = function(){ disableRun();};
+	document.getElementById('parallelity').onchange = function(){ disableRun();};
+	document.getElementById('waitBetweenMessages').onchange = function(){ disableRun();};
+	document.getElementById('waitBeforeStart').onchange = function(){ disableRun();};	
+
+	var allTestplans = [];
+		
+	function buildTestplanTable(){
+		document.getElementById('navigation').innerHTML = "<p><strong>Stored Testplans</strong></p>";
+		document.getElementById('navigation').appendChild(makeULTestplan(allTestplans));	
+		fillOutTestplanContents(allTestplans.length-1);
+	}
+	
+	function fillOutTestplanContents(i) {			
+		document.getElementById('targetURI').value = allTestplans[i].path;
+		document.getElementById('requests').value = allTestplans[i].numRuns;		
+		document.getElementById('parallelity').value = allTestplans[i].parallelity;
+		document.getElementById('waitBetweenMessages').value = allTestplans[i].waitBetweenMsgs;
+		document.getElementById('waitBeforeStart').value = allTestplans[i].waitBeforeStart;
+		document.getElementById('testID').value = allTestplans[i].id;
+		document.getElementById('runTetstplan').disabled = false;
+	}
+	
+	function makeULTestplan(array) {
+		// Create the list element:
+		var list = document.createElement('ul');
+
+		for(var i = 0; i < array.length; i++) {
+			// Create the list item:
+			var item = document.createElement('li');
+			
+			// Set its contents:
+			var a = document.createElement('a');
+			var linkText = document.createTextNode(array[i].path +"; "+ array[i].numRuns+"; "+array[i].parallelity);
+			a.id = array[i].id;
+			a.appendChild(linkText);
+			a.title = i;			
+			a.onclick = function(){
+				console.log("loading TestplanContents for id: "+this.id);
+				fillOutTestplanContents(this.title);
+				
+			}
+			a.href = "#";
+			
+			item.appendChild(a);
+
+			// Add it to the list:
+			list.appendChild(item);
+		}
+
+		// Finally, return the constructed list:
+		return list;
+	}
+
+
+	function runTestplan() {
+		
+		var testID = document.getElementById("testID").value;
+		if(testID != "")
+		{
+			var runTestplanRequest = {
+				"type": "start run",
+				"testplan": testID
+			}
+			var runTestplanRequestJSON = JSON.stringify(runTestplanRequest);
+			connection.send(runTestplanRequestJSON);			
+		}
+	}
+
+	function saveTestplan() {
+		console.log('saveTesplan method invoked');		
+		var target = document.getElementById('targetURI').value;
+		var requests = document.getElementById('requests').value;		
+		var parallelity = document.getElementById('parallelity').value;
+		var waitBetweenMessages = document.getElementById('waitBetweenMessages').value;
+		var waitBeforeStart = document.getElementById('waitBeforeStart').value;
+				
+		var saveTestplanRequest = {
+			"type":"store plan",
+			"testplan":  {				
+				"path":target,
+				"connectionType":"HTTP",
+				"numRuns":parseInt(requests),
+				"parallelity":parseInt(parallelity),
+				"waitBetweenMessages":parseInt(waitBetweenMessages),
+				"waitBeforeStart":parseInt(waitBeforeStart)
+			}
+		}
+			
+		var testplanRequestJSON = JSON.stringify(saveTestplanRequest);
+		
+		console.log(testplanRequestJSON);
+		connection.send(testplanRequestJSON);
+		
+	}
+	function loadAllTestplans(){
+		var request = {
+			"type": "all plans"
+			}
+		var requestJON = JSON.stringify(request);
+		connection.send(requestJON);
+	}
+	
+	function loadStoredRuns(id)
+	{
+		var request = {
+			"type": "load run",
+			"id": id
+			}
+		var requestJON = JSON.stringify(request);
+		connection.send(requestJON);
+	}
+	
+	var connection = new WebSocket('ws://localhost:9000/socket', ['soap', 'xmpp']);
+	
+	// When the connection is open, login
+	connection.onopen = function () 
+	{
+		console.log('socket just opened');
+		var loginObject = {
+			"type": "login",
+			"name": "test",
+			"password": "test"
+		};
+		var loginJSON = JSON.stringify(loginObject);
+		connection.send(loginJSON);
+	};
+
+	// Log errors
+	connection.onerror = function (error) 
+	{
+		console.log('WebSocket Error ' + error);
+	};
+
+	// Log messages from the server
+	connection.onmessage = function (e) 
+	{
+		console.log('Server: ' + e.data);
+		var messageObject = JSON.parse(e.data);		
+		
+		//catching Authentication, loading User´s Testplans
+		if (messageObject.type == "login")
+		{
+			loadAllTestplans();	
+		}
+		
+		//catching All Plans:
+		if (messageObject.type == "all plans") {
+			allTestplans = [];
+			for (i = 0; i < messageObject.content.length; i++)
+			{
+				allTestplans.push(messageObject.content[i]);				
+			};
+			buildTestplanTable();
+		};
+		
+		//catching newly stored testplan
+		if (messageObject.type == "stored plan") {
+			loadAllTestplans();
+		}
+		
+	};
+	
+	function createTestUser()
+	{
+		var registerObject = {
+			"type": "register",
+			"name": "test",
+			"password": "test"
+		};
+		var registerJSON = JSON.stringify(registerObject);
+		connection.send(registerJSON);
+	}
+	
+	
+	//document.getElementById('extra').appendChild(makeUL(sampleArray));
+	
+</script>
     
 
 }
