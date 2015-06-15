@@ -31,7 +31,9 @@
 		  </p>		
 		  <br><br>
 		  <p>
-		    ##Result Stuff goes here##
+		    <textarea id ="results">
+				##Result Stuff goes here##
+			</textarea>
 		  </p>
       </div>	  
 	</div>
@@ -68,7 +70,14 @@
 	document.getElementById('waitBeforeStart').onchange = function(){ disableRun();};	
 
 	var allTestplans = [];
-		
+	var allTestruns = [];
+	
+	
+	function buildRunTable(){
+		document.getElementById('extra').innerHTML = "<p><strong>Stored Testruns</strong></p>";
+		document.getElementById('extra').appendChild(makeULTestrun(allTestruns));		
+	}
+	
 	function buildTestplanTable(){
 		document.getElementById('navigation').innerHTML = "<p><strong>Stored Testplans</strong></p>";
 		document.getElementById('navigation').appendChild(makeULTestplan(allTestplans));	
@@ -83,8 +92,10 @@
 		document.getElementById('waitBeforeStart').value = allTestplans[i].waitBeforeStart;
 		document.getElementById('testID').value = allTestplans[i].id;
 		document.getElementById('runTetstplan').disabled = false;
+		loadRunsForTestPlan(allTestplans[i].id);
 	}
 	
+		
 	function makeULTestplan(array) {
 		// Create the list element:
 		var list = document.createElement('ul');
@@ -103,6 +114,36 @@
 				console.log("loading TestplanContents for id: "+this.id);
 				fillOutTestplanContents(this.title);
 				
+			}
+			a.href = "#";
+			
+			item.appendChild(a);
+
+			// Add it to the list:
+			list.appendChild(item);
+		}
+
+		// Finally, return the constructed list:
+		return list;
+	}
+	
+	function makeULTestrun(array) {
+		// Create the list element:
+		var list = document.createElement('ul');
+
+		for(var i = 0; i < array.length; i++) {
+			// Create the list item:
+			var item = document.createElement('li');
+			
+			// Set its contents:
+			var a = document.createElement('a');
+			var linkText = document.createTextNode(array[i].id);
+			a.id = array[i].id;
+			a.appendChild(linkText);
+			a.title = i;			
+			a.onclick = function(){
+				console.log("loading run for id: "+this.id);				
+				loadStoredRunData(this.id);
 			}
 			a.href = "#";
 			
@@ -165,7 +206,7 @@
 		connection.send(requestJON);
 	}
 	
-	function loadStoredRuns(id)
+	function loadStoredRunData(id)
 	{
 		var request = {
 			"type": "load run",
@@ -223,7 +264,33 @@
 			loadAllTestplans();
 		}
 		
+		//catching runs
+		if (messageObject.type == "all runs") {
+			allTestruns = [];
+			for (i = 0; i < messageObject.content.length; i++)
+			{
+				allTestruns.push(messageObject.content[i]);				
+			};
+			buildRunTable();
+		}
+		
+		//catching results
+		if (messageObject.type == "raw") {
+			var resultfield = document.getElementById("results");
+			resultfield.value = resultfield.value + JSON.stringify(messageObject.content);
+		}
+		
 	};
+	
+	function loadRunsForTestPlan(id)
+	{
+		 var request = {
+			"type": "load plan",
+			"id": id
+			}
+		var requestJON = JSON.stringify(request);
+		connection.send(requestJON);		 
+	}
 	
 	function createTestUser()
 	{
@@ -236,8 +303,6 @@
 		connection.send(registerJSON);
 	}
 	
-	
-	//document.getElementById('extra').appendChild(makeUL(sampleArray));
 	
 </script>
     
