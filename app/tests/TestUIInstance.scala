@@ -144,18 +144,14 @@ class TestUIInstance {
 		}
 	}
 
-	def testAllPlans = { // TODO JsArr
+	def testAllPlans = {
 		ws(List(("type", JsString("all plans"))))
-		/*val answer = get
-		// TODO type check
+		val answer = get
+		if(JSONHelper.JsStringToString(answer.\("type")).equals("all plans"))
 		for(elem <- answer.\("content").asInstanceOf[JsArray].productIterator) {
-			val obj =
-		}*/
-		for(i <- 0 until 50) {
-			val obj = get
-			if(!obj.\("type").toString().equals("testplan") ||  testplans.get(new ObjectId(JSONHelper.JsStringToString(obj.\("content").\("id")))).isEmpty)
-				problems.add(Test.problem(new Exception().getStackTrace()(0), "All plans failed: " + i + " result: " + obj.toString()))
-		} // TODO Fix
+			if(testplans.get(new ObjectId(JSONHelper.JsStringToString(elem.asInstanceOf[JsObject].\("id")))).isEmpty)
+				problems.add(Test.problem(new Exception().getStackTrace()(0), "All plans failed"))
+		}
 	}
 
 	val testruns = new mutable.HashMap[Testplan, ArrayBuffer[Testrun]]()
@@ -187,21 +183,20 @@ class TestUIInstance {
 		}
 	}
 
-	def testLoadPlan = { // TODO JsArr
-		for((_, tmptp) <- testplans) {
+	def testLoadPlan = {
+		for((tmpid, tmptp) <- testplans) {
 			ws(List(
 				("type", JsString("load plan"))
 			,	("id", JsString(tmptp.getID.toString))
 			))
-			for(j <- 0 until (testruns(tmptp) length) + 1) {
-				val response = get
-				if(!
-				(	get.\("type").toString().equals("testplan")
-				&&	Testplan.fromJSON(get.\("content").asInstanceOf[JsObject]).equals(tmptp))
-				||	(get.\("type").toString().equals("testrun")
-				&&	(testruns(tmptp) contains Testrun.fromJSON(get.\("content").asInstanceOf[JsObject])))
-				)
-					problems.add(Test.problem(new Exception().getStackTrace()(0), "Loading plan failed: " + response))
+			val answer = get
+			if(!JSONHelper.JsStringToString(answer.\("type")).equals("all runs"))
+				problems.add(Test.problem(new Exception().getStackTrace()(0), "Loading plan failed: wrong type: " + answer))
+			if(!tmpid.equals(new ObjectId(JSONHelper.JsStringToString(answer.\("testplan")))))
+				problems.add(Test.problem(new Exception().getStackTrace()(0), "Loading plan failed: wrong plan: " + answer))
+			for(elem <- answer.\("content").asInstanceOf[JsArray].productIterator) {
+				if(!(testruns(tmptp) contains Testrun.fromJSON(elem.asInstanceOf[JsObject])))
+					problems.add(Test.problem(new Exception().getStackTrace()(0), "Loading plan failed: wrong run: " + elem))
 			}
 		}
 	}
