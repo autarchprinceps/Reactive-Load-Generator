@@ -31,9 +31,7 @@
 		  </p>		
 		  <br><br>
 		  <p>
-		    <textarea id ="results">
-				##Result Stuff goes here##
-			</textarea>
+		     <svg id="chart"></svg>
 		  </p>
       </div>	  
 	</div>
@@ -142,7 +140,9 @@
 			a.appendChild(linkText);
 			a.title = i;			
 			a.onclick = function(){
-				console.log("loading run for id: "+this.id);				
+				console.log("loading run for id: "+this.id);
+				chart.selectAll('circle').remove();
+				data = [];
 				loadStoredRunData(this.id);
 			}
 			a.href = "#";
@@ -167,6 +167,9 @@
 				"type": "start run",
 				"testplan": testID
 			}
+			chart.selectAll('circle').remove();
+			data = [];
+			
 			var runTestplanRequestJSON = JSON.stringify(runTestplanRequest);
 			connection.send(runTestplanRequestJSON);			
 		}
@@ -276,8 +279,9 @@
 		
 		//catching results
 		if (messageObject.type == "raw") {
-			var resultfield = document.getElementById("results");
-			resultfield.value = resultfield.value + JSON.stringify(messageObject.content);
+			console.log("UPDATE " + messageObject.content.start + " " + messageObject.content.end);		
+			update({start: messageObject.content.start, 
+				end: messageObject.content.end});
 		}
 		
 	};
@@ -301,6 +305,107 @@
 		};
 		var registerJSON = JSON.stringify(registerObject);
 		connection.send(registerJSON);
+	}
+	
+	//chart script:
+	var margin = { top: 20, right: 30, bottom: 30, left: 40 },
+                width = 700 - margin.left - margin.right,
+                height = 500 - margin.top - margin.bottom;
+            
+	var x = d3.scale.linear()
+		.range([0, width]);
+	
+	var y = d3.scale.linear()
+		.range([height, 0]);
+
+	var xAxis = d3.svg.axis()
+		.scale(x)
+		.orient("bottom");
+
+	var yAxis = d3.svg.axis()
+		.scale(y)
+		.orient("left");
+		
+	var chart = d3.select("#chart")
+		.attr("width", width + margin.left + margin.right)
+		.attr("height", height + margin.top + margin.bottom)
+		.append("g")
+			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+		
+	var data = []; // {start: int, end: int}
+	
+	initChart();
+	
+	
+	function initChart()
+	{
+	
+	chart.append('g')
+		.attr('class', 'x axis')
+		.attr('transform', 'translate(0,' + height + ')')
+		.call(xAxis)
+	.append("text")
+		.attr("class", "label")
+		.attr("x", width)
+		.attr("y", -6)
+		.style("text-anchor", "end")
+		.text('runtime [s]');
+	chart.append('g')
+		.attr('class', 'y axis')
+		.attr('transform', 'translate(0,0)')
+		.call(yAxis)
+	.append('text')
+		.attr('class', 'label')
+		.attr('transform', 'rotate(-90)')
+		.attr('y', 6)
+		.attr('dy', '.71em')
+		.style("text-anchor", 'end')
+		.text('delay [s]');
+	}
+	
+	function update(newMessage) {
+		data.push(newMessage);
+		
+		var maxx = d3.max(data, function (d) {
+			return d.start;
+		});
+		x.domain([0, maxx]);
+		y.domain([0, d3.max(data, function (d) {
+			return d.end - d.start;
+		})]);
+	   
+		var datapoints = chart.selectAll('circle')
+			.data(data);
+		
+		datapoints
+			.transition()
+			.duration(1)
+			.attr('cx', function (d) {
+				return x(d.start);
+			})
+			.attr('cy', function (d) {
+				return y(d.end - d.start);
+			})
+			.attr('r', 25 * Math.log(maxx) / Math.sqrt(maxx));
+		
+		datapoints.enter().append('circle')
+			.transition()
+			.duration(1)
+			.attr('cx', function (d) {
+				return x(d.start);
+			})
+			.attr('cy', function (d) {
+				return y(d.end - d.start);
+			})
+			.attr('r', 25 * Math.log(maxx) / Math.sqrt(maxx));
+		chart.select('.x')
+			.transition()
+			.duration(1)
+			.call(xAxis);
+		chart.select('.y')
+			.transition()
+			.duration(1)
+			.call(yAxis);
 	}
 	
 	
