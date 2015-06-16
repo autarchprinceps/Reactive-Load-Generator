@@ -104,8 +104,9 @@ class DB(database : String = "loadgen") extends UntypedActor {
 					val result = usercoll.findOne(MongoDBObject("name" -> query.terms.get("name"))).orNull
 					query.flag = result == null
 					if(query.flag) {
+						query.result = new ObjectId
 						usercoll.insert(MongoDBObject(
-							"_id" -> new ObjectId
+							"_id" -> query.result.asInstanceOf[ObjectId]
 							, "name" -> query.terms.get("name")
 							, "password" -> query.terms.get("password")
 						), WriteConcern.Journaled)

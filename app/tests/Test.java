@@ -58,13 +58,26 @@ public class Test {
 					name += alphabet.charAt((i + j + random.nextInt(i + 1)) % alphabet.length());
 					password += alphabet.charAt((i + j + random.nextInt(i + 1)) % alphabet.length());
 				}
-				User tmp = new User(
-					new ObjectId()
-					, name
-					, password
-				);
-				inbox.send(db_ref, tmp);
-				users.add(tmp);
+				DBQuery regQuery = new DBQuery();
+				regQuery.t = DBQuery.Type.Register;
+				regQuery.terms = new HashMap<>();
+				regQuery.terms.put("name", name);
+				regQuery.terms.put("password", password);
+				inbox.send(db_ref, regQuery);
+				DBQuery response = (DBQuery)inbox.receive(Duration.create(200, TimeUnit.MINUTES));
+				if(response.flag) {
+					User tmp = new User(
+						(ObjectId)response.result
+					,   name
+					,   password
+					);
+					users.add(tmp);
+				} else {
+					problems.add(problem(
+						new Exception().getStackTrace()[0],
+						"Register failed: " + response
+					));
+				}
 			}
 			System.out.println("dbTest users created, starting insert plans");
 			// Thread.sleep(1000);
@@ -182,7 +195,7 @@ public class Test {
 					));
 				}
 			}
-			System.out.println("dbTest got runs, starting get raw"); // TODO FIX Dead Letters after this
+			System.out.println("dbTest got runs, starting get raw");
 			// Thread.sleep(10000);
 			// get raw
 			runs.stream().forEach(testrun1 -> {
