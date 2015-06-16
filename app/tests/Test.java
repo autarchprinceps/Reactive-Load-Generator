@@ -11,6 +11,8 @@ import helper.JSONHelper;
 import org.bson.types.ObjectId;
 import play.api.libs.json.JsArray;
 import play.api.libs.json.JsObject;
+import play.api.libs.json.JsValue;
+import scala.collection.Seq;
 import scala.concurrent.duration.Duration;
 import scala.util.parsing.json.JSONObject;
 
@@ -56,13 +58,26 @@ public class Test {
 					name += alphabet.charAt((i + j + random.nextInt(i + 1)) % alphabet.length());
 					password += alphabet.charAt((i + j + random.nextInt(i + 1)) % alphabet.length());
 				}
-				User tmp = new User(
-					new ObjectId()
-					, name
-					, password
-				);
-				inbox.send(db_ref, tmp);
-				users.add(tmp);
+				DBQuery regQuery = new DBQuery();
+				regQuery.t = DBQuery.Type.Register;
+				regQuery.terms = new HashMap<>();
+				regQuery.terms.put("name", name);
+				regQuery.terms.put("password", password);
+				inbox.send(db_ref, regQuery);
+				DBQuery response = (DBQuery)inbox.receive(Duration.create(200, TimeUnit.MINUTES));
+				if(response.flag) {
+					User tmp = new User(
+						(ObjectId)response.result
+					,   name
+					,   password
+					);
+					users.add(tmp);
+				} else {
+					problems.add(problem(
+						new Exception().getStackTrace()[0],
+						"Register failed: " + response
+					));
+				}
 			}
 			System.out.println("dbTest users created, starting insert plans");
 			// Thread.sleep(1000);
@@ -180,7 +195,7 @@ public class Test {
 					));
 				}
 			}
-			System.out.println("dbTest got runs, starting get raw"); // TODO FIX Dead Letters after this
+			System.out.println("dbTest got runs, starting get raw");
 			// Thread.sleep(10000);
 			// get raw
 			runs.stream().forEach(testrun1 -> {
@@ -203,7 +218,6 @@ public class Test {
 			System.out.println("dbTest got raws, starting get all plans for user");
 			// Thread.sleep(10000);
 			// get all plans for user
-			List<Testplan> testplanList = new ArrayList<>(plans.size());
 			users.stream().map(user -> {
 				DBGetCMD result = new DBGetCMD();
 				result.t = DBGetCMD.Type.AllPlansForUser;
@@ -211,19 +225,14 @@ public class Test {
 				return result;
 			}).forEach(dbGetCMD -> inbox.send(db_ref, dbGetCMD));
 			// Thread.sleep(30000);
+			List<Testplan> testplanList = new ArrayList<>(plans.size());
 			JsObject get = (JsObject)inbox.receive(Duration.create(200, TimeUnit.MINUTES));
-			JsArray arr = (JsArray)get.$bslash("content");
-			arr.productIterator().foreach(elem -> {
-				try {
-					testplanList.add(Testplan.fromJSON((JsObject) elem));
-				} catch(MalformedURLException e) {
-					problems.add(problem(
-						e.getStackTrace()[0],
-						"Malformed URL"
-					));
-				}
-				return null;
-			});
+			Seq<JsValue> arr = ((JsArray)get.$bslash("content")).value();
+			JsValue[] testplanArray = new JsValue[arr.size()];
+			arr.copyToArray(testplanArray);
+			for(JsValue value : testplanArray) {
+				testplanList.add(Testplan.fromJSON((JsObject)value));
+			}
 			testplanList.sort((t1, t2) -> t1.getID().compareTo(t2.getID()));
 			List<Testplan> copy = new ArrayList<>(plans.size());
 			Collections.copy(copy, plans);
@@ -238,31 +247,23 @@ public class Test {
 			// Thread.sleep(10000);
 			// get all run for plan
 			List<Testrun> testrunList = new ArrayList<>(runs.size());
+			// Thread.sleep(30000);
 			plans.stream().forEach(testplan1 -> {
 				DBGetCMD dbGetCMD = new DBGetCMD();
 				dbGetCMD.id = testplan1.getID();
 				dbGetCMD.t = DBGetCMD.Type.AllRunsForPlan;
 				inbox.send(db_ref, dbGetCMD);
-			});
-			// Thread.sleep(30000);
-			plans.stream().forEach(testplan1 -> {
-				JsObject get1 = (JsObject)inbox.receive(Duration.create(200, TimeUnit.MINUTES));
-				try {
-					Testplan testplan = Testplan.fromJSON((JsObject) get1.$bslash("testplan"));
-					if(!plans.contains(testplan)) {
-						problems.add(problem(
-							new Exception().getStackTrace()[0],
-							"AllRuns: Testplan doesn't match"
-						));
-					}
-				} catch(MalformedURLException e) {
+				JsObject get1 = (JsObject) inbox.receive(Duration.create(200, TimeUnit.MINUTES));
+				if(testplan1.getID().equals(new ObjectId(JSONHelper.JsStringToString(get1.$bslash("testplan"))))) {
 					problems.add(problem(
-						e.getStackTrace()[0],
-						"AllRuns: Plan" + get1.$bslash("testplan") + ": Malformed URL"
+						new Exception().getStackTrace()[0],
+						"AllRuns: Testplan doesn't match"
 					));
 				}
-				JsArray arr1 = (JsArray) get1.$bslash("content");
-				arr1.productIterator().foreach(elem -> {
+				Seq<JsValue> arr1 = ((JsArray) get.$bslash("content")).value();
+				JsValue[] testrunArray = new JsValue[arr.size()];
+				arr1.copyToArray(testrunArray);
+				for(JsValue elem : testrunArray) {
 					try {
 						testrunList.add(Testrun.fromJSON((JsObject) elem));
 					} catch(MalformedURLException e) {
@@ -271,8 +272,7 @@ public class Test {
 							"AllRuns: Run" + elem + ": Malformed URL"
 						));
 					}
-					return null;
-				});
+				}
 			});
 			testrunList.sort((t1, t2) -> t1.getID().compareTo(t2.getID()));
 			List<Testrun> rcpy = new ArrayList<>(runs.size());

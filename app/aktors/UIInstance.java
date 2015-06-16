@@ -128,14 +128,14 @@ public class UIInstance extends UntypedActor {
 				case "load plan": // Tested (both parts)
 					System.out.println("DEBUG: UIInstance Loading plan");
 					if(currentUser != null) {
-						DBGetCMD dbGetCMD = new DBGetCMD();
+						/*DBGetCMD dbGetCMD = new DBGetCMD();
 						dbGetCMD.t = DBGetCMD.Type.PlanByID;
 						dbGetCMD.id = new ObjectId(JSONHelper.JsStringToString(json.$bslash("id")));
 						System.out.println(dbGetCMD.id.toString());
-						db.tell(dbGetCMD, getSelf());
+						db.tell(dbGetCMD, getSelf());*/
 						DBGetCMD dbGetCMD2 = new DBGetCMD();
 						dbGetCMD2.t = DBGetCMD.Type.AllRunsForPlan;
-						dbGetCMD2.id = dbGetCMD.id;
+						dbGetCMD2.id = new ObjectId(JSONHelper.JsStringToString(json.$bslash("id"))); // dbGetCMD.id
 						db.tell(dbGetCMD2, getSelf());
 						System.out.println("DEBUG: UIInstance Loaded plan");
 					} else {
