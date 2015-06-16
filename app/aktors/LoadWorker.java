@@ -31,6 +31,7 @@ public class LoadWorker extends UntypedActor {
             Testrun init = (Testrun)message;
             Testplan plan = init.getTestplan();
             t = new Thread(() -> {
+                long firstStart = System.currentTimeMillis();
                 if (plan.getWaitBeforeStart() > 0) {
                     try {
                         Thread.sleep(plan.getWaitBeforeStart());
@@ -38,7 +39,7 @@ public class LoadWorker extends UntypedActor {
                     }
                 }
                 for (int i = 0; i < plan.getNumRuns(); i++) {
-                    long start = System.currentTimeMillis();
+                    long start = System.currentTimeMillis() - firstStart;
                     // HTTP GET Request
                     try {
                     	HttpURLConnection connection = null;
@@ -59,7 +60,7 @@ public class LoadWorker extends UntypedActor {
                     	// TODO Auto-generated catch block
                     	e1.printStackTrace();
                     }
-	                LoadWorkerRaw msg = new LoadWorkerRaw(init, i, start, System.currentTimeMillis());
+	                LoadWorkerRaw msg = new LoadWorkerRaw(init, i, start, System.currentTimeMillis() - firstStart);
 
                     init.getSubscribers().parallelStream().forEach((actorRef -> actorRef.tell(msg, getSelf())));
                     if (plan.getWaitBetweenMsgs() > 0) {

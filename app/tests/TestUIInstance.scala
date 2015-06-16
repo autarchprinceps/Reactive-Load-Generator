@@ -10,7 +10,7 @@ import aktors.{DB, UIInstance}
 import com.typesafe.config.ConfigFactory
 import helper.JSONHelper
 import org.bson.types.ObjectId
-import play.api.libs.json.{Json, JsObject, JsString, JsValue}
+import play.api.libs.json._
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -140,11 +140,17 @@ class TestUIInstance {
 			,   ("testplan", ttp.toJSON(false))
 			))
 			testplans += tid -> ttp
+			if(!answerCheckType("stored plan")) problems.add(Test.problem(new Exception().getStackTrace()(0), "Store plan failed: " + ttp.toJSON(false).toString()))
 		}
 	}
 
-	def testAllPlans = {
+	def testAllPlans = { // TODO JsArr
 		ws(List(("type", JsString("all plans"))))
+		/*val answer = get
+		// TODO type check
+		for(elem <- answer.\("content").asInstanceOf[JsArray].productIterator) {
+			val obj =
+		}*/
 		for(i <- 0 until 50) {
 			val obj = get
 			if(!obj.\("type").toString().equals("testplan") ||  testplans.get(new ObjectId(JSONHelper.JsStringToString(obj.\("content").\("id")))).isEmpty)
@@ -181,7 +187,7 @@ class TestUIInstance {
 		}
 	}
 
-	def testLoadPlan = {
+	def testLoadPlan = { // TODO JsArr
 		for((_, tmptp) <- testplans) {
 			ws(List(
 				("type", JsString("load plan"))
@@ -206,7 +212,7 @@ class TestUIInstance {
 			for(j <- 0 until (tmptrs length)) {
 				ws(List(
 					("type", JsString("load run"))
-					,	("id", JsString(tmptrs(j).getID.toString))
+				,	("id", JsString(tmptrs(j).getID.toString))
 				))
 				val recrun = get
 				if(!recrun.\("type").toString().equals("testrun")) {

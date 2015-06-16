@@ -7,9 +7,15 @@ import akka.actor.Props;
 import aktors.DB;
 import aktors.messages.*;
 import com.typesafe.config.ConfigFactory;
+import helper.JSONHelper;
 import org.bson.types.ObjectId;
+import play.api.libs.json.JsArray;
+import play.api.libs.json.JsObject;
 import scala.concurrent.duration.Duration;
+import scala.util.parsing.json.JSONObject;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -43,10 +49,10 @@ public class Test {
 
 			// insert users
 			String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-			for (int i = 0; i < 20; i++) {
+			for(int i = 0; i < 20; i++) {
 				String name = "" + alphabet.charAt(i % alphabet.length());
 				String password = "" + alphabet.charAt(i % alphabet.length());
-				for (int j = 0; j < i / 10 + 5; j++) {
+				for(int j = 0; j < i / 10 + 5; j++) {
 					name += alphabet.charAt((i + j + random.nextInt(i + 1)) % alphabet.length());
 					password += alphabet.charAt((i + j + random.nextInt(i + 1)) % alphabet.length());
 				}
@@ -61,23 +67,32 @@ public class Test {
 			System.out.println("dbTest users created, starting insert plans");
 			// Thread.sleep(1000);
 			// insert plans
-			for (int i = 0; i < 100; i++) {
-				/*Testplan tmp = new Testplan();
+			for(int i = 0; i < 100; i++) {
+				Testplan tmp = new Testplan(
+					new ObjectId(),
+					1 + random.nextInt(20) + random.nextInt(20) + random.nextInt(20),
+					1 + random.nextInt(20),
+					new URL("http://example.com:1337/test/blub"), // TODO autogen?
+					random.nextInt(10),
+					random.nextInt(10),
+					ConnectionType.values()[random.nextInt(ConnectionType.values().length)],
+					null
+				);
 				tmp.setUser(users.get(random.nextInt(users.size())));
-				tmp.setConnectionType(ConnectionType.values()[random.nextInt(ConnectionType.values().length)]);
-				tmp.setNumRuns(1 + random.nextInt(20) + random.nextInt(20) + random.nextInt(20));
-				tmp.setParallelity(1 + random.nextInt(20));
-				tmp.setId(new ObjectId());
-				tmp.setWaitBeforeStart(random.nextInt(10));
-				tmp.setWaitBetweenMsgs(random.nextInt(10));*/
-				//try {
-					//tmp.setPath(new URL("http://example.com:1337/test/blub")); // TODO autogen?
-				//} catch (MalformedURLException ex) {
-					//ex.printStackTrace();
-					//problems.add(problem(ex.getStackTrace()[0], "URL Malformed (Error in test, not code)"));
-				//}
-				//inbox.send(db_ref, tmp);
-				//plans.add(tmp);
+				inbox.send(db_ref, tmp);
+				plans.add(tmp);
+			}
+			// return reciept
+			for(int i = 0; i < 100; i++) {
+				JsObject get = (JsObject)inbox.receive(Duration.create(200, TimeUnit.MINUTES));
+				if(!plans.parallelStream().map(testplan ->
+					testplan.getID().equals(new ObjectId(JSONHelper.JsStringToString(get.$bslash("id"))))
+				).reduce(false, Boolean::logicalOr)) {
+					problems.add(problem(
+						new Exception().getStackTrace()[0],
+						"Wrong return receipt: " + get
+					));
+				}
 			}
 			System.out.println("dbTest plans inserted, starting insert runs");
 			// Thread.sleep(10000);
@@ -196,10 +211,19 @@ public class Test {
 				return result;
 			}).forEach(dbGetCMD -> inbox.send(db_ref, dbGetCMD));
 			// Thread.sleep(30000);
-			for (int i = 0; i < plans.size(); i++) {
-				Testplan tmp = (Testplan) inbox.receive(Duration.create(200, TimeUnit.MINUTES)); // TODO FIX LoadRunRaw received?
-				testplanList.add(tmp);
-			}
+			JsObject get = (JsObject)inbox.receive(Duration.create(200, TimeUnit.MINUTES));
+			JsArray arr = (JsArray)get.$bslash("content");
+			arr.productIterator().foreach(elem -> {
+				try {
+					testplanList.add(Testplan.fromJSON((JsObject) elem));
+				} catch(MalformedURLException e) {
+					problems.add(problem(
+						e.getStackTrace()[0],
+						"Malformed URL"
+					));
+				}
+				return null;
+			});
 			testplanList.sort((t1, t2) -> t1.getID().compareTo(t2.getID()));
 			List<Testplan> copy = new ArrayList<>(plans.size());
 			Collections.copy(copy, plans);
@@ -221,9 +245,35 @@ public class Test {
 				inbox.send(db_ref, dbGetCMD);
 			});
 			// Thread.sleep(30000);
-			for (int i = 0; i < runs.size(); i++) {
-				testrunList.add((Testrun) inbox.receive(Duration.create(200, TimeUnit.MINUTES)));
-			}
+			plans.stream().forEach(testplan1 -> {
+				JsObject get1 = (JsObject)inbox.receive(Duration.create(200, TimeUnit.MINUTES));
+				try {
+					Testplan testplan = Testplan.fromJSON((JsObject) get1.$bslash("testplan"));
+					if(!plans.contains(testplan)) {
+						problems.add(problem(
+							new Exception().getStackTrace()[0],
+							"AllRuns: Testplan doesn't match"
+						));
+					}
+				} catch(MalformedURLException e) {
+					problems.add(problem(
+						e.getStackTrace()[0],
+						"AllRuns: Plan" + get1.$bslash("testplan") + ": Malformed URL"
+					));
+				}
+				JsArray arr1 = (JsArray) get1.$bslash("content");
+				arr1.productIterator().foreach(elem -> {
+					try {
+						testrunList.add(Testrun.fromJSON((JsObject) elem));
+					} catch(MalformedURLException e) {
+						problems.add(problem(
+							e.getStackTrace()[0],
+							"AllRuns: Run" + elem + ": Malformed URL"
+						));
+					}
+					return null;
+				});
+			});
 			testrunList.sort((t1, t2) -> t1.getID().compareTo(t2.getID()));
 			List<Testrun> rcpy = new ArrayList<>(runs.size());
 			Collections.copy(runs, rcpy);
