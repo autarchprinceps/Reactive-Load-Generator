@@ -123,7 +123,7 @@ public class Test {
 			// Thread.sleep(20000);
 			// insert raw
 			runs.parallelStream().forEach(testrun -> {
-				List<LoadWorkerRaw> tmps = new ArrayList<>();
+				List<LoadWorkerRaw> tmps = new ArrayList<>(); // TODO never queried
 				Testplan tmptp = testrun.getTestplan();
 				for (int i = 0; i < tmptp.getNumRuns() * tmptp.getParallelity(); i++) {
 					int rstart = random.nextInt(i + 1);
@@ -186,7 +186,7 @@ public class Test {
 				return result;
 			}).forEach(dbGetCMD -> inbox.send(db_ref, dbGetCMD));
 			// Thread.sleep(1000);
-			for (int i = 0; i < plans.size(); i++) {
+			for (int i = 0; i < runs.size(); i++) {
 				Testrun r = (Testrun) inbox.receive(Duration.create(200, TimeUnit.MINUTES));
 				if(runs.stream().filter(run -> run.equals(r)).count() != 1) {
 					problems.add(problem(
@@ -206,12 +206,12 @@ public class Test {
 			});
 			// Thread.sleep(30000);
 			int totalrunraws = runs.parallelStream().map(testrun1 -> testrun1.getTestplan().getParallelity() * testrun1.getTestplan().getNumRuns()).reduce(0, Integer::sum);
-			for (int i = 0; i < totalrunraws; i++) {
+			for(int i = 0; i < totalrunraws; i++) {
 				Object tmp = inbox.receive(Duration.create(200, TimeUnit.MINUTES));
-				if(!(tmp instanceof LoadWorkerRaw)) {
+				if(!(tmp instanceof LoadWorkerRaw)) { // TODO fails: is Testrun?!
 					problems.add(problem(
 						new Exception().getStackTrace()[0],
-						"A LoadWorkerRaw doesn't match"
+						"A LoadWorkerRaw doesn't match: " + tmp
 					));
 				}
 			}
@@ -226,7 +226,7 @@ public class Test {
 			}).forEach(dbGetCMD -> inbox.send(db_ref, dbGetCMD));
 			// Thread.sleep(30000);
 			List<Testplan> testplanList = new ArrayList<>(plans.size());
-			JsObject get = (JsObject)inbox.receive(Duration.create(200, TimeUnit.MINUTES));
+			JsObject get = (JsObject)inbox.receive(Duration.create(200, TimeUnit.MINUTES)); // TODO LoadWorkerRaw received
 			Seq<JsValue> arr = ((JsArray)get.$bslash("content")).value();
 			JsValue[] testplanArray = new JsValue[arr.size()];
 			arr.copyToArray(testplanArray);
