@@ -190,7 +190,7 @@
 				"connectionType":"HTTP",
 				"numRuns":parseInt(requests),
 				"parallelity":parseInt(parallelity),
-				"waitBetweenMessages":parseInt(waitBetweenMessages),
+				"waitBetweenMsgs":parseInt(waitBetweenMessages),
 				"waitBeforeStart":parseInt(waitBeforeStart)
 			}
 		}
@@ -278,8 +278,7 @@
 		}
 		
 		//catching results
-		if (messageObject.type == "raw") {
-			console.log("UPDATE " + messageObject.content.start + " " + messageObject.content.end);		
+		if (messageObject.type == "raw") {			
 			update({start: messageObject.content.start, 
 				end: messageObject.content.end});
 		}
