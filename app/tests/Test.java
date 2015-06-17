@@ -179,22 +179,18 @@ public class Test {
 			System.out.println("dbTest plans got, starting get runs");
 			// Thread.sleep(10000);
 			// get runs
-			runs.stream().map(testrun -> {
-				DBGetCMD result = new DBGetCMD();
-				result.t = DBGetCMD.Type.RunByID;
-				result.id = testrun.getID();
-				return result;
-			}).forEach(dbGetCMD -> inbox.send(db_ref, dbGetCMD));
-			// Thread.sleep(1000);
-			for (int i = 0; i < runs.size(); i++) {
-				Testrun r = (Testrun) inbox.receive(Duration.create(200, TimeUnit.MINUTES));
-				if(runs.stream().filter(run -> run.equals(r)).count() != 1) {
+			runs.stream().forEach(testrun -> {
+				DBGetCMD dbGetCMD = new DBGetCMD();
+				dbGetCMD.t = DBGetCMD.Type.RunByID;
+				dbGetCMD.id = testrun.getID();
+				inbox.send(db_ref, dbGetCMD);
+				Testrun r = (Testrun)inbox.receive(Duration.create(200, TimeUnit.MINUTES));
+				if(!testrun.equals(r))
 					problems.add(problem(
 						new Exception().getStackTrace()[0],
 						"A run doesn't match: " + r.toJSON(true).toString()
 					));
-				}
-			}
+			});
 			System.out.println("dbTest got runs, starting get raw");
 			// Thread.sleep(10000);
 			// get raw
