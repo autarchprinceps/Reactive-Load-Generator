@@ -22,13 +22,11 @@ public class LoadRunner extends UntypedActor {
 	}
 
 	public LoadRunner(ActorSystem as, Testplan testplan, ActorRef db, ActorRef ui) {
-		this.as = as;
-		subscribers = new ArrayList<>(2);
+        List<ActorRef> subscribers = new ArrayList<>(2);
 		subscribers.add(db);
 		subscribers.add(ui);
 
         testrun = new Testrun(new ObjectId(), subscribers, testplan);
-		System.out.println("DEBUG LoadRunner testrun: " + testrun.toJSON(true));
 		subscribers.parallelStream().forEach(actorRef -> actorRef.tell(testrun, getSelf()));
 
         workers = new ArrayList<>(testrun.getTestplan().getParallelity());
@@ -37,10 +35,8 @@ public class LoadRunner extends UntypedActor {
         }
 	}
 
-	private final ActorSystem as;
     private List<ActorRef> workers;
     private Testrun testrun;
-	private List<ActorRef> subscribers;
 
     @Override
     public void onReceive(Object message) {
@@ -52,7 +48,7 @@ public class LoadRunner extends UntypedActor {
                     break;
                 case Stop:
                     workers.parallelStream().forEach((x) -> x.tell(WorkerCMD.Stop, getSelf()));
-                    // DEBUG deadletters getContext().stop(getSelf());
+                    getContext().stop(getSelf());
                     break;
             }
         } else {

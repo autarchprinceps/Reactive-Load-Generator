@@ -43,7 +43,6 @@ public class UIInstance extends UntypedActor {
 	}
 
 	private User currentUser;
-	private List<ActorRef> running = new ArrayList<>();
 
 	@Override
 	public void onReceive(Object message) throws Exception {
@@ -71,7 +70,6 @@ public class UIInstance extends UntypedActor {
 				case "logout":
 					System.out.println("DEBUG: UIInstance Logging out");
 					currentUser = null; // TODO need to stop something else?
-					// TODO disconnect running TestRuns from socket
 					ws(JSONHelper.simpleResponse("logout", "Logged out"), getSelf());
 					System.out.println("DEBUG: UIInstance Logged out");
 					break;
@@ -102,8 +100,7 @@ public class UIInstance extends UntypedActor {
 								, db
 								, as.actorOf(Props.create(RunnerConnector.class, websocket))
 							));
-							newRunner.tell(RunnerCMD.Start, getSelf()); // TODO seperate start necessary? depends on UI
-							running.add(newRunner);
+							newRunner.tell(RunnerCMD.Start, getSelf());
 						};
 						db.tell(dbGetCMD3, getSelf());
 						System.out.println("DEBUG: UIInstance Started run");
@@ -163,22 +160,19 @@ public class UIInstance extends UntypedActor {
 					// throw new Exception("Wrong input to WebSocket");
 					break;
 			}
-		} else if(message instanceof Testrun) {
-			if(currentUser != null) {
+		} else if(message instanceof Testrun)
+			if(currentUser != null)
 				ws(JSONHelper.objectResponse("testrun", ((Testrun) message).toJSON()), getSelf());
-			} else {
+			else
 				ws(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
-			}
-		} else if(message instanceof Testplan) {
-			if(currentUser != null) {
+		else if(message instanceof Testplan)
+			if (currentUser != null)
 				ws(JSONHelper.objectResponse("testplan", ((Testplan) message).toJSON()), getSelf());
-			} else {
+			else
 				ws(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
-			}
-		} else if(message instanceof JsObject) {
-			System.out.println("DEBUG UII Forwarding message: " + ((JsObject)message).toString());
+		else if(message instanceof JsObject)
 			ws((JsObject) message, getSelf());
-		} else if(message instanceof DBQuery) {
+		else if(message instanceof DBQuery) {
 			DBQuery queryResult = (DBQuery)message;
 			switch(queryResult.t) {
 				case Login: // Tested
@@ -191,17 +185,14 @@ public class UIInstance extends UntypedActor {
 					}
 					break;
 				case Register: // Tested
-					if(queryResult.flag) {
+					if(queryResult.flag)
 						ws(JSONHelper.simpleResponse("register", "Register successful"), getSelf());
-					} else {
+					else
 						ws(JSONHelper.simpleResponse("error", "Register failed: " + queryResult.result), getSelf());
-					}
 					break;
 			}
-		} else {
-			System.out.println("DEBUG: UIInstance unhandled");
+		} else
 			unhandled(message);
-		}
 	}
 
 	@Override

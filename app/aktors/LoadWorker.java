@@ -35,7 +35,7 @@ public class LoadWorker extends UntypedActor {
                 if (plan.getWaitBeforeStart() > 0) {
                     try {
                         Thread.sleep(plan.getWaitBeforeStart());
-                    } catch (InterruptedException e) {
+                    } catch (InterruptedException ignored) {
                     }
                 }
                 for (int i = 0; i < plan.getNumRuns(); i++) {
@@ -46,8 +46,7 @@ public class LoadWorker extends UntypedActor {
                     	URL url = plan.getPath();
                     	connection = (HttpURLConnection)url.openConnection();
                     	connection.setRequestMethod("GET");
-                    	int responseCode = connection.getResponseCode();
-                    	BufferedReader in = new BufferedReader(
+                        BufferedReader in = new BufferedReader(
                     			new InputStreamReader(connection.getInputStream()));
                     	String inputLine;
                     	StringBuffer response = new StringBuffer();
@@ -63,11 +62,9 @@ public class LoadWorker extends UntypedActor {
 	                LoadWorkerRaw msg = new LoadWorkerRaw(init, i, start, System.currentTimeMillis() - firstStart);
 
                     init.getSubscribers().parallelStream().forEach((actorRef -> actorRef.tell(msg, getSelf())));
-                    if (plan.getWaitBetweenMsgs() > 0) {
-                        try {
-                            Thread.sleep(plan.getWaitBetweenMsgs());
-                        } catch (InterruptedException e) {
-                        }
+                    if (plan.getWaitBetweenMsgs() > 0) try {
+                        Thread.sleep(plan.getWaitBetweenMsgs());
+                    } catch (InterruptedException ignored) {
                     }
                 }
 	            // TODO inform runner that finished?
@@ -77,7 +74,7 @@ public class LoadWorker extends UntypedActor {
             WorkerCMD cmd = (WorkerCMD)message;
             if(cmd == WorkerCMD.Stop) {
                 t.stop();
-                // DEBUG deadletters getContext().stop(getSelf());
+                getContext().stop(getSelf());
             }
         } else {
             unhandled(message);
