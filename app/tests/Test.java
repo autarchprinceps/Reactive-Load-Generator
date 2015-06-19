@@ -85,8 +85,8 @@ public class Test {
 			for(int i = 0; i < 100; i++) {
 				Testplan tmp = new Testplan(
 					new ObjectId(),
-					1 + random.nextInt(20) + random.nextInt(20) + random.nextInt(20),
-					1 + random.nextInt(20),
+					1, //+ random.nextInt(5),
+					1, //+ random.nextInt(10),
 					new URL("http://example.com:1337/test/blub"), // TODO autogen?
 					random.nextInt(10),
 					random.nextInt(10),
@@ -123,7 +123,7 @@ public class Test {
 			// Thread.sleep(20000);
 			// insert raw
 			runs.parallelStream().forEach(testrun -> {
-				List<LoadWorkerRaw> tmps = new ArrayList<>(); // TODO never queried
+				// List<LoadWorkerRaw> tmps = new ArrayList<>(); // TODO never queried
 				Testplan tmptp = testrun.getTestplan();
 				for (int i = 0; i < tmptp.getNumRuns() * tmptp.getParallelity(); i++) {
 					int rstart = random.nextInt(i + 1);
@@ -135,7 +135,7 @@ public class Test {
 					);
 					inbox.send(db_ref, tmp);
 					try {Thread.sleep(tmptp.getWaitBetweenMsgs());} catch(Exception ex) {}
-					tmps.add(tmp);
+					// tmps.add(tmp);
 				}
 			});
 			System.out.println("dbTest raws inserted, starting get user");
@@ -194,22 +194,24 @@ public class Test {
 			System.out.println("dbTest got runs, starting get raw");
 			// Thread.sleep(10000);
 			// get raw
-			runs.stream().forEach(testrun1 -> {
+			for(int i1 = 0; i1 < runs.size(); i1++) {
+				Testrun testrun1 = runs.get(i1);
 				DBGetCMD result = new DBGetCMD();
 				result.t = DBGetCMD.Type.RunRaws;
 				result.id = testrun1.getID();
 				inbox.send(db_ref, result);
-			});
-			// Thread.sleep(30000);
-			int totalrunraws = runs.parallelStream().map(testrun1 -> testrun1.getTestplan().getParallelity() * testrun1.getTestplan().getNumRuns()).reduce(0, Integer::sum);
-			for(int i = 0; i < totalrunraws; i++) {
-				Object tmp = inbox.receive(Duration.create(200, TimeUnit.MINUTES));
-				if(!(tmp instanceof LoadWorkerRaw)) { // TODO fails: is Testrun?!
-					problems.add(problem(
-						new Exception().getStackTrace()[0],
-						"A LoadWorkerRaw doesn't match: " + tmp
-					));
+				int raws = testrun1.getTestplan().getParallelity() * testrun1.getTestplan().getNumRuns();
+				System.out.println("dbTest run: " + i1 + " raws: " + raws + " " + testrun1.getID());
+				for(int i = 0; i < raws; i++) {
+					Object tmp = inbox.receive(Duration.create(5, TimeUnit.MINUTES));
+					if(!(tmp instanceof LoadWorkerRaw)) {
+						problems.add(problem(
+							new Exception().getStackTrace()[0],
+							"A LoadWorkerRaw doesn't match: " + tmp
+						));
+					}
 				}
+				System.out.println("dbTest raws one run done");
 			}
 			System.out.println("dbTest got raws, starting get all plans for user");
 			// Thread.sleep(10000);

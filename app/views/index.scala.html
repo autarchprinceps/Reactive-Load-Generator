@@ -6,10 +6,10 @@
 <div id="container">
   <div id="header"><h1>Load Generator Akka Play</h1></div>
     <div id="wrapper">
-	  <div id="content">      
+	  <div id="content">
 		  <p>
 		    <p><h2>Testplan</h2></p>
-		    <table>			  
+		    <table>
 			  <tr><td>
 			  Target URI: <td><input type="text" id ="targetURI" name="targetURI">
 			  <tr><td>
@@ -22,26 +22,26 @@
 			  Wait before Start: <td> <input type="text" id ="waitBeforeStart" name="waitBeforeStart">
 			  <tr><td>
 			  TestID: <td> <input type="text" id ="testID" name="testID" disabled>
-			</table>   
+			</table>
 			<br>
-			
+
 			  <input id="saveTestplan" type="button" value="Store as new" onclick="saveTestplan();" />
 			  <input id="runTetstplan" type="button" value="Run" onclick="runTestplan();" disabled/>
-			
-		  </p>		
+
+		  </p>
 		  <br><br>
 		  <p>
 		     <svg id="chart"></svg>
 		  </p>
-      </div>	  
+      </div>
 	</div>
 	<div id="navigation">
     <p><strong>Stored Testplans</strong></p>
-    
+
   </div>
   <div id="extra">
     <p><strong>Stored Runs</strong></p>
-    
+
   </div>
     <div id="footer">
 		<p>Alex Laitenberger & Patrick Robinson at Web Engineering Hochschule Bonn Rhein-Sieg</p>
@@ -52,7 +52,7 @@
 <script type="text/javascript">
 
 
-	
+
 
 	function disableRun()
 	{
@@ -65,26 +65,26 @@
 	document.getElementById('requests').onchange = function(){ disableRun();};
 	document.getElementById('parallelity').onchange = function(){ disableRun();};
 	document.getElementById('waitBetweenMessages').onchange = function(){ disableRun();};
-	document.getElementById('waitBeforeStart').onchange = function(){ disableRun();};	
+	document.getElementById('waitBeforeStart').onchange = function(){ disableRun();};
 
 	var allTestplans = [];
 	var allTestruns = [];
-	
-	
+
+
 	function buildRunTable(){
 		document.getElementById('extra').innerHTML = "<p><strong>Stored Testruns</strong></p>";
-		document.getElementById('extra').appendChild(makeULTestrun(allTestruns));		
+		document.getElementById('extra').appendChild(makeULTestrun(allTestruns));
 	}
-	
+
 	function buildTestplanTable(){
 		document.getElementById('navigation').innerHTML = "<p><strong>Stored Testplans</strong></p>";
-		document.getElementById('navigation').appendChild(makeULTestplan(allTestplans));	
+		document.getElementById('navigation').appendChild(makeULTestplan(allTestplans));
 		fillOutTestplanContents(allTestplans.length-1);
 	}
-	
-	function fillOutTestplanContents(i) {			
+
+	function fillOutTestplanContents(i) {
 		document.getElementById('targetURI').value = allTestplans[i].path;
-		document.getElementById('requests').value = allTestplans[i].numRuns;		
+		document.getElementById('requests').value = allTestplans[i].numRuns;
 		document.getElementById('parallelity').value = allTestplans[i].parallelity;
 		document.getElementById('waitBetweenMessages').value = allTestplans[i].waitBetweenMsgs;
 		document.getElementById('waitBeforeStart').value = allTestplans[i].waitBeforeStart;
@@ -92,8 +92,8 @@
 		document.getElementById('runTetstplan').disabled = false;
 		loadRunsForTestPlan(allTestplans[i].id);
 	}
-	
-		
+
+
 	function makeULTestplan(array) {
 		// Create the list element:
 		var list = document.createElement('ul');
@@ -101,20 +101,20 @@
 		for(var i = 0; i < array.length; i++) {
 			// Create the list item:
 			var item = document.createElement('li');
-			
+
 			// Set its contents:
 			var a = document.createElement('a');
 			var linkText = document.createTextNode(array[i].path +"; "+ array[i].numRuns+"; "+array[i].parallelity);
 			a.id = array[i].id;
 			a.appendChild(linkText);
-			a.title = i;			
+			a.title = i;
 			a.onclick = function(){
 				console.log("loading TestplanContents for id: "+this.id);
 				fillOutTestplanContents(this.title);
-				
+
 			}
 			a.href = "#";
-			
+
 			item.appendChild(a);
 
 			// Add it to the list:
@@ -124,7 +124,7 @@
 		// Finally, return the constructed list:
 		return list;
 	}
-	
+
 	function makeULTestrun(array) {
 		// Create the list element:
 		var list = document.createElement('ul');
@@ -132,13 +132,13 @@
 		for(var i = 0; i < array.length; i++) {
 			// Create the list item:
 			var item = document.createElement('li');
-			
+
 			// Set its contents:
 			var a = document.createElement('a');
 			var linkText = document.createTextNode(array[i].id);
 			a.id = array[i].id;
 			a.appendChild(linkText);
-			a.title = i;			
+			a.title = i;
 			a.onclick = function(){
 				console.log("loading run for id: "+this.id);
 				chart.selectAll('circle').remove();
@@ -146,7 +146,7 @@
 				loadStoredRunData(this.id);
 			}
 			a.href = "#";
-			
+
 			item.appendChild(a);
 
 			// Add it to the list:
@@ -159,7 +159,7 @@
 
 
 	function runTestplan() {
-		
+
 		var testID = document.getElementById("testID").value;
 		if(testID != "")
 		{
@@ -169,23 +169,23 @@
 			}
 			chart.selectAll('circle').remove();
 			data = [];
-			
+
 			var runTestplanRequestJSON = JSON.stringify(runTestplanRequest);
-			connection.send(runTestplanRequestJSON);			
+			connection.send(runTestplanRequestJSON);
 		}
 	}
 
 	function saveTestplan() {
-		console.log('saveTesplan method invoked');		
+		console.log('saveTesplan method invoked');
 		var target = document.getElementById('targetURI').value;
-		var requests = document.getElementById('requests').value;		
+		var requests = document.getElementById('requests').value;
 		var parallelity = document.getElementById('parallelity').value;
 		var waitBetweenMessages = document.getElementById('waitBetweenMessages').value;
 		var waitBeforeStart = document.getElementById('waitBeforeStart').value;
-				
+
 		var saveTestplanRequest = {
 			"type":"store plan",
-			"testplan":  {				
+			"testplan":  {
 				"path":target,
 				"connectionType":"HTTP",
 				"numRuns":parseInt(requests),
@@ -194,12 +194,12 @@
 				"waitBeforeStart":parseInt(waitBeforeStart)
 			}
 		}
-			
+
 		var testplanRequestJSON = JSON.stringify(saveTestplanRequest);
-		
+
 		console.log(testplanRequestJSON);
 		connection.send(testplanRequestJSON);
-		
+
 	}
 	function loadAllTestplans(){
 		var request = {
@@ -208,7 +208,7 @@
 		var requestJON = JSON.stringify(request);
 		connection.send(requestJON);
 	}
-	
+
 	function loadStoredRunData(id)
 	{
 		var request = {
@@ -218,11 +218,11 @@
 		var requestJON = JSON.stringify(request);
 		connection.send(requestJON);
 	}
-	
+
 	var connection = new WebSocket('ws://localhost:9000/socket', ['soap', 'xmpp']);
-	
+
 	// When the connection is open, login
-	connection.onopen = function () 
+	connection.onopen = function ()
 	{
 		console.log('socket just opened');
 		var loginObject = {
@@ -235,56 +235,56 @@
 	};
 
 	// Log errors
-	connection.onerror = function (error) 
+	connection.onerror = function (error)
 	{
 		console.log('WebSocket Error ' + error);
 	};
 
 	// Log messages from the server
-	connection.onmessage = function (e) 
+	connection.onmessage = function (e)
 	{
 		console.log('Server: ' + e.data);
-		var messageObject = JSON.parse(e.data);		
-		
+		var messageObject = JSON.parse(e.data);
+
 		//catching Authentication, loading User´s Testplans
 		if (messageObject.type == "login")
 		{
-			loadAllTestplans();	
+			loadAllTestplans();
 		}
-		
+
 		//catching All Plans:
 		if (messageObject.type == "all plans") {
 			allTestplans = [];
 			for (i = 0; i < messageObject.content.length; i++)
 			{
-				allTestplans.push(messageObject.content[i]);				
+				allTestplans.push(messageObject.content[i]);
 			};
 			buildTestplanTable();
 		};
-		
+
 		//catching newly stored testplan
 		if (messageObject.type == "stored plan") {
 			loadAllTestplans();
 		}
-		
+
 		//catching runs
 		if (messageObject.type == "all runs") {
 			allTestruns = [];
 			for (i = 0; i < messageObject.content.length; i++)
 			{
-				allTestruns.push(messageObject.content[i]);				
+				allTestruns.push(messageObject.content[i]);
 			};
 			buildRunTable();
 		}
-		
+
 		//catching results
-		if (messageObject.type == "raw") {			
-			update({start: messageObject.content.start, 
+		if (messageObject.type == "raw") {
+			update({start: messageObject.content.start,
 				end: messageObject.content.end});
 		}
-		
+
 	};
-	
+
 	function loadRunsForTestPlan(id)
 	{
 		 var request = {
@@ -292,9 +292,9 @@
 			"id": id
 			}
 		var requestJON = JSON.stringify(request);
-		connection.send(requestJON);		 
+		connection.send(requestJON);
 	}
-	
+
 	function createTestUser()
 	{
 		var registerObject = {
@@ -305,15 +305,15 @@
 		var registerJSON = JSON.stringify(registerObject);
 		connection.send(registerJSON);
 	}
-	
+
 	//chart script:
 	var margin = { top: 20, right: 30, bottom: 30, left: 40 },
                 width = 700 - margin.left - margin.right,
                 height = 500 - margin.top - margin.bottom;
-            
+
 	var x = d3.scale.linear()
 		.range([0, width]);
-	
+
 	var y = d3.scale.linear()
 		.range([height, 0]);
 
@@ -324,21 +324,21 @@
 	var yAxis = d3.svg.axis()
 		.scale(y)
 		.orient("left");
-		
+
 	var chart = d3.select("#chart")
 		.attr("width", width + margin.left + margin.right)
 		.attr("height", height + margin.top + margin.bottom)
 		.append("g")
 			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-		
+
 	var data = []; // {start: int, end: int}
-	
+
 	initChart();
-	
-	
+
+
 	function initChart()
 	{
-	
+
 	chart.append('g')
 		.attr('class', 'x axis')
 		.attr('transform', 'translate(0,' + height + ')')
@@ -361,10 +361,10 @@
 		.style("text-anchor", 'end')
 		.text('delay [ms]');
 	}
-	
+
 	function update(newMessage) {
 		data.push(newMessage);
-		
+
 		var maxx = d3.max(data, function (d) {
 			return d.start;
 		});
@@ -372,13 +372,13 @@
 		y.domain([0, d3.max(data, function (d) {
 			return d.end - d.start;
 		})]);
-	   
+
 		var datapoints = chart.selectAll('circle')
 			.data(data);
-		
+
 		datapoints
-			.transition()
-			.duration(1)
+			// .transition()
+			// .duration(1)
 			.attr('cx', function (d) {
 				return x(d.start);
 			})
@@ -386,10 +386,10 @@
 				return y(d.end - d.start);
 			})
 			.attr('r', 25 * Math.log(maxx) / Math.sqrt(maxx));
-		
+
 		datapoints.enter().append('circle')
-			.transition()
-			.duration(1)
+			// .transition()
+			// .duration(1)
 			.attr('cx', function (d) {
 				return x(d.start);
 			})
@@ -398,17 +398,17 @@
 			})
 			.attr('r', 25 * Math.log(maxx) / Math.sqrt(maxx));
 		chart.select('.x')
-			.transition()
-			.duration(1)
+			// .transition()
+			// .duration(1)
 			.call(xAxis);
 		chart.select('.y')
-			.transition()
-			.duration(1)
+			// .transition()
+			// .duration(1)
 			.call(yAxis);
 	}
-	
-	
+
+
 </script>
-    
+
 
 }

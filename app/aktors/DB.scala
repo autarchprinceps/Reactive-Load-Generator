@@ -46,7 +46,6 @@ class DB(database : String = "loadgen") extends UntypedActor {
 					"type" -> JsString("stored plan")
 				,   "id" -> JsString(tplan.getID.toString)
 				)
-				println("DEBUG: DB stored plan: " + returnReceit.toString)
 				getSender.tell(returnReceit, getSelf)
 			}
 			case getCMD : DBGetCMD =>
@@ -76,13 +75,16 @@ class DB(database : String = "loadgen") extends UntypedActor {
 					case DBGetCMD.Type.PlanByID => function(getPlan(getCMD.id))
 					case DBGetCMD.Type.RunByID => function(getRun(getCMD.id))
 					case DBGetCMD.Type.UserByID => function(getUser(getCMD.id))
-					case DBGetCMD.Type.RunRaws =>
+					case DBGetCMD.Type.RunRaws => {
 						val testrunobj = testruncoll.findOneByID(getCMD.id).get
-						val testrunF : Future[Testrun] = Future { convertRun(testrunobj) }
+						val testrunF: Future[Testrun] = Future {
+							convertRun(testrunobj)
+						}
 						testrunobj.getAs[MongoDBList]("runs").get.foreach(obj => {
 							val raw = obj.asInstanceOf[BasicDBObject]
 							function(new LoadWorkerRaw(testrunF, raw.getAs[Int]("iter").get, raw.getAs[Long]("start").get, raw.getAs[Long]("end").get))
 						})
+					}
 				}
 			case query : DBQuery => query.t match {
 				case DBQuery.Type.Login =>
