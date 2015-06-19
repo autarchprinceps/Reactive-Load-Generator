@@ -15,7 +15,7 @@ import scala.concurrent.Future
  * Created by Patrick Robinson on 02.05.15.
  */
 class DB(database : String = "loadgen") extends UntypedActor {
-	val client = MongoClient() // TODO multiple Verbindungen?
+	val client = MongoClient()
 	val db = client(database)
 	val testruncoll = db("testrun")
 	val testplancoll = db("testplan")

@@ -120,12 +120,14 @@ public class Test {
 				}
 			});
 			System.out.println("dbTest runs inserted, starting insert raw");
-			// Thread.sleep(20000);
+			Thread.sleep(2000);
 			// insert raw
 			runs.parallelStream().forEach(testrun -> {
 				// List<LoadWorkerRaw> tmps = new ArrayList<>(); // TODO never queried
 				Testplan tmptp = testrun.getTestplan();
-				for (int i = 0; i < tmptp.getNumRuns() * tmptp.getParallelity(); i++) {
+				int numraws = tmptp.getNumRuns() * tmptp.getParallelity();
+				System.out.println("dbTest insert raws: " + numraws);
+				for (int i = 0; i < numraws; i++) {
 					int rstart = random.nextInt(i + 1);
 					LoadWorkerRaw tmp = new LoadWorkerRaw(
 						testrun
@@ -133,7 +135,7 @@ public class Test {
 						, rstart
 						, rstart + random.nextInt(i / 2 + 1)
 					);
-					inbox.send(db_ref, tmp);
+					inbox.send(db_ref, tmp); // TODO some runs lack data
 					try {Thread.sleep(tmptp.getWaitBetweenMsgs());} catch(Exception ex) {}
 					// tmps.add(tmp);
 				}
@@ -168,7 +170,7 @@ public class Test {
 			}).forEach(dbGetCMD -> inbox.send(db_ref, dbGetCMD));
 			// Thread.sleep(1000);
 			for (int i = 0; i < plans.size(); i++) {
-				Testplan p = (Testplan) inbox.receive(Duration.create(200, TimeUnit.MINUTES));
+				Testplan p = (Testplan)inbox.receive(Duration.create(200, TimeUnit.MINUTES));
 				if(plans.stream().filter(plan -> plan.equals(p)).count() != 1) {
 					problems.add(problem(
 						new Exception().getStackTrace()[0],
@@ -216,24 +218,31 @@ public class Test {
 			System.out.println("dbTest got raws, starting get all plans for user");
 			// Thread.sleep(10000);
 			// get all plans for user
-			users.stream().map(user -> {
-				DBGetCMD result = new DBGetCMD();
-				result.t = DBGetCMD.Type.AllPlansForUser;
-				result.id = user.getID();
-				return result;
-			}).forEach(dbGetCMD -> inbox.send(db_ref, dbGetCMD));
-			// Thread.sleep(30000);
 			List<Testplan> testplanList = new ArrayList<>(plans.size());
-			JsObject get = (JsObject)inbox.receive(Duration.create(200, TimeUnit.MINUTES)); // TODO LoadWorkerRaw received
-			Seq<JsValue> arr = ((JsArray)get.$bslash("content")).value();
-			JsValue[] testplanArray = new JsValue[arr.size()];
-			arr.copyToArray(testplanArray);
-			for(JsValue value : testplanArray) {
-				testplanList.add(Testplan.fromJSON((JsObject)value));
-			}
+			users.stream().forEach(user -> {
+				DBGetCMD dbGetCMD = new DBGetCMD();
+				dbGetCMD.t = DBGetCMD.Type.AllPlansForUser;
+				dbGetCMD.id = user.getID();
+				inbox.send(db_ref, dbGetCMD);
+				JsObject get = (JsObject)inbox.receive(Duration.create(200, TimeUnit.MINUTES));
+				Seq<JsValue> arr = ((JsArray)get.$bslash("content")).value();
+				JsValue[] testplanArray = new JsValue[arr.size()];
+				arr.copyToArray(testplanArray);
+				for(JsValue value : testplanArray) {
+					try {
+						testplanList.add(Testplan.fromJSON((JsObject)value));
+					} catch(MalformedURLException e) {
+						problems.add(problem(
+							new Exception().getStackTrace()[0],
+							"AllPlansForUser failed: MalformedURL: " + value
+						));
+					}
+				}
+			});
+			// Thread.sleep(30000);
 			testplanList.sort((t1, t2) -> t1.getID().compareTo(t2.getID()));
 			List<Testplan> copy = new ArrayList<>(plans.size());
-			Collections.copy(copy, plans);
+			plans.stream().forEach(testplan2 -> copy.add(testplan2));
 			copy.sort((t1, t2) -> t1.getID().compareTo(t2.getID()));
 			if(!Arrays.deepEquals(testplanList.toArray(), copy.toArray())) {
 				problems.add(problem(
@@ -252,14 +261,18 @@ public class Test {
 				dbGetCMD.t = DBGetCMD.Type.AllRunsForPlan;
 				inbox.send(db_ref, dbGetCMD);
 				JsObject get1 = (JsObject) inbox.receive(Duration.create(200, TimeUnit.MINUTES));
-				if(testplan1.getID().equals(new ObjectId(JSONHelper.JsStringToString(get1.$bslash("testplan"))))) {
+				if(!testplan1.getID().equals(
+					new ObjectId(
+						JSONHelper.JsStringToString(get1.$bslash("testplan"))
+					)
+				)) {
 					problems.add(problem(
 						new Exception().getStackTrace()[0],
 						"AllRuns: Testplan doesn't match"
 					));
 				}
-				Seq<JsValue> arr1 = ((JsArray) get.$bslash("content")).value();
-				JsValue[] testrunArray = new JsValue[arr.size()];
+				Seq<JsValue> arr1 = ((JsArray) get1.$bslash("content")).value();
+				JsValue[] testrunArray = new JsValue[arr1.size()];
 				arr1.copyToArray(testrunArray);
 				for(JsValue elem : testrunArray) {
 					try {
