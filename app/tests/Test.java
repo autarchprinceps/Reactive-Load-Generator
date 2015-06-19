@@ -85,8 +85,8 @@ public class Test {
 			for(int i = 0; i < 100; i++) {
 				Testplan tmp = new Testplan(
 					new ObjectId(),
-					1, //+ random.nextInt(5),
-					1, //+ random.nextInt(10),
+					1 + random.nextInt(5),
+					1 + random.nextInt(10),
 					new URL("http://example.com:1337/test/blub"), // TODO autogen?
 					random.nextInt(10),
 					random.nextInt(10),
@@ -126,7 +126,7 @@ public class Test {
 				// List<LoadWorkerRaw> tmps = new ArrayList<>(); // TODO never queried
 				Testplan tmptp = testrun.getTestplan();
 				int numraws = tmptp.getNumRuns() * tmptp.getParallelity();
-				System.out.println("dbTest insert raws: " + numraws);
+				// System.out.println("dbTest insert raws: " + numraws);
 				for (int i = 0; i < numraws; i++) {
 					int rstart = random.nextInt(i + 1);
 					LoadWorkerRaw tmp = new LoadWorkerRaw(
@@ -135,7 +135,7 @@ public class Test {
 						, rstart
 						, rstart + random.nextInt(i / 2 + 1)
 					);
-					inbox.send(db_ref, tmp); // TODO some runs lack data
+					inbox.send(db_ref, tmp);
 					try {Thread.sleep(tmptp.getWaitBetweenMsgs());} catch(Exception ex) {}
 					// tmps.add(tmp);
 				}
@@ -203,7 +203,7 @@ public class Test {
 				result.id = testrun1.getID();
 				inbox.send(db_ref, result);
 				int raws = testrun1.getTestplan().getParallelity() * testrun1.getTestplan().getNumRuns();
-				System.out.println("dbTest run: " + i1 + " raws: " + raws + " " + testrun1.getID());
+				// System.out.println("dbTest run: " + i1 + " raws: " + raws + " " + testrun1.getID());
 				for(int i = 0; i < raws; i++) {
 					Object tmp = inbox.receive(Duration.create(5, TimeUnit.MINUTES));
 					if(!(tmp instanceof LoadWorkerRaw)) {
@@ -213,7 +213,7 @@ public class Test {
 						));
 					}
 				}
-				System.out.println("dbTest raws one run done");
+				// System.out.println("dbTest raws one run done");
 			}
 			System.out.println("dbTest got raws, starting get all plans for user");
 			// Thread.sleep(10000);
@@ -287,7 +287,7 @@ public class Test {
 			});
 			testrunList.sort((t1, t2) -> t1.getID().compareTo(t2.getID()));
 			List<Testrun> rcpy = new ArrayList<>(runs.size());
-			Collections.copy(runs, rcpy);
+			runs.stream().forEach(testrun1 -> rcpy.add(testrun1));
 			rcpy.sort((t1, t2) -> t1.getID().compareTo(t2.getID()));
 			if(!Arrays.deepEquals(testrunList.toArray(), rcpy.toArray())) {
 				problems.add(problem(
@@ -330,5 +330,5 @@ public class Test {
 	public static List<String> testUII() {
 		System.out.println("Test.java: testUII");
 		return new TestUIInstance().apply();
-	} // TODO does nothing !
+	}
 }
