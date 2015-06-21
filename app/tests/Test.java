@@ -136,7 +136,7 @@ public class Test {
 						, rstart + random.nextInt(i / 2 + 1)
 					);
 					inbox.send(db_ref, tmp);
-					try {Thread.sleep(tmptp.getWaitBetweenMsgs());} catch(Exception ex) {}
+					try {Thread.sleep(tmptp.getWaitBetweenMsgs());} catch(Exception ignored) {}
 					// tmps.add(tmp);
 				}
 			});
@@ -242,7 +242,7 @@ public class Test {
 			// Thread.sleep(30000);
 			testplanList.sort((t1, t2) -> t1.getID().compareTo(t2.getID()));
 			List<Testplan> copy = new ArrayList<>(plans.size());
-			plans.stream().forEach(testplan2 -> copy.add(testplan2));
+			plans.stream().forEach(copy::add);
 			copy.sort((t1, t2) -> t1.getID().compareTo(t2.getID()));
 			if(!Arrays.deepEquals(testplanList.toArray(), copy.toArray())) {
 				problems.add(problem(

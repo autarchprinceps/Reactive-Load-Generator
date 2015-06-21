@@ -61,7 +61,7 @@ class TestUIInstance {
 		Thread.sleep(2000)
 		testLoadPlan
 		println("TestUIInstance testLoadPlan")
-		Thread.sleep(2000)
+		Thread.sleep(5000)
 		testLoadRun
 		println("TestUIInstance testLoadRun")
 		Thread.sleep(2000)
@@ -105,8 +105,6 @@ class TestUIInstance {
 			,	("password", JsString(passwords(i)))
 			))
 			if(!answerCheckType("logout")) problems.add(Test.problem(new Exception().getStackTrace()(0), "Logout failed: " + i + " " + names(i) + " " + passwords(i)))
-			// TODO checkNotAuthenticated
-			// TODO wrong authentication
 		}
 
 		ws(List(
@@ -114,7 +112,7 @@ class TestUIInstance {
 		,	("name", JsString("test"))
 		,	("password", JsString("test"))
 		))
-		if(!answerCheckType("registered")) problems.add(Test.problem(new Exception().getStackTrace()(0), "Register failed: test test"))
+		if(!answerCheckType("register")) problems.add(Test.problem(new Exception().getStackTrace()(0), "Register failed: test test"))
 		ws(List(
 			("type", JsString("login"))
 		,	("name", JsString("test"))
@@ -126,13 +124,13 @@ class TestUIInstance {
 	val testplans = new mutable.HashMap[ObjectId, Testplan]()
 
 	def testStorePlan = {
-		for(k <- 0 until 50) {
+		for(k <- 0 until 10) {
 			val tid = new ObjectId
 			val ttp = new Testplan(
 				ID = tid
 			,   ConType = ConnectionType.HTTP
-			,   NumRuns = k + random.nextInt(k + 1)
-			,   Parallelity = random.nextInt(10) + 1
+			,   NumRuns = 3 + random.nextInt(k + 1)
+			,   Parallelity = random.nextInt(4) + 1
 			,   Path = new URL("http://localhost:1301")
 			)
 			ws(List(
@@ -147,10 +145,17 @@ class TestUIInstance {
 	def testAllPlans = {
 		ws(List(("type", JsString("all plans"))))
 		val answer = get
-		if(JSONHelper.JsStringToString(answer.\("type")).equals("all plans"))
-		for(elem <- answer.\("content").asInstanceOf[JsArray].productIterator) {
-			if(testplans.get(new ObjectId(JSONHelper.JsStringToString(elem.asInstanceOf[JsObject].\("id")))).isEmpty)
-				problems.add(Test.problem(new Exception().getStackTrace()(0), "All plans failed"))
+		println("tUII testAllPlans got")
+		if(JSONHelper.JsStringToString(answer.\("type")).equals("all plans")) {
+			println("tUII testAllPlans checking individual plans orig size: " + testplans.size + " answer size: " + answer.\("content").asInstanceOf[JsArray].value.size)
+			for(elem <- answer.\("content").asInstanceOf[JsArray].value) {
+				if(testplans.get(new ObjectId(JSONHelper.JsStringToString(elem.asInstanceOf[JsObject].\("id")))).isEmpty) {
+					println(elem)
+					problems.add(Test.problem(new Exception().getStackTrace()(0), "A plan in all plans failed"))
+				}
+			}
+		} else {
+			problems.add(Test.problem(new Exception().getStackTrace()(0), "All plans failed"))
 		}
 	}
 
@@ -163,21 +168,21 @@ class TestUIInstance {
 			for (j <- 0 until numTR) {
 				ws(List(
 					("type", JsString("start run"))
-					, ("testplan", tmptp.toJSON(false))
+				,   ("testplan", JsString(tmptp.getID.toString))
 				))
-				val tmpget = get
-				if (!tmpget.\("type").toString().equals("runstart")) {
-					problems.add(Test.problem(new Exception().getStackTrace()(0), "run not started: " + tmpget))
-				} else {
-					val tmprun = Testrun.fromJSON(tmpget.\("content").asInstanceOf[JsObject])
-					if (!tmprun.getTestplan.equals(tmptp))
-						problems.add(Test.problem(new Exception().getStackTrace()(0), "Wrong Testplan for run: " + tmpget))
-					tmpabuf += tmprun
-					for (k <- 0 until tmptp.getNumRuns * tmptp.getParallelity) {
-						if (!get.\("type").toString().equals("raw"))
-							problems.add(Test.problem(new Exception().getStackTrace()(0), "Not enought raws received for Testrun: " + tmprun.toJSON(true)))
+				var tmprun : Testrun = null
+				for(k <- 0 until tmptp.getNumRuns * tmptp.getParallelity + 1) { // Testrun + Raws
+					val tmpget = get
+					val gettype = JSONHelper.JsStringToString(tmpget.\("type"))
+					if(tmprun == null && gettype.equals("testrun")) {
+						tmprun = Testrun.fromJSON(tmpget.\("content").asInstanceOf[JsObject])
+					} else if(!gettype.equals("raw")) {
+						problems.add(Test.problem(new Exception().getStackTrace()(0), "Unexpected message in testRun: " + tmpget))
 					}
 				}
+				if(tmprun == null)
+					problems.add(Test.problem(new Exception().getStackTrace()(0), "No testrun definition for run received"))
+				else tmpabuf += tmprun
 			}
 			testruns += tmptp -> tmpabuf
 		}
@@ -194,7 +199,7 @@ class TestUIInstance {
 				problems.add(Test.problem(new Exception().getStackTrace()(0), "Loading plan failed: wrong type: " + answer))
 			if(!tmpid.equals(new ObjectId(JSONHelper.JsStringToString(answer.\("testplan")))))
 				problems.add(Test.problem(new Exception().getStackTrace()(0), "Loading plan failed: wrong plan: " + answer))
-			for(elem <- answer.\("content").asInstanceOf[JsArray].productIterator) {
+			for(elem <- answer.\("content").asInstanceOf[JsArray].value) {
 				if(!(testruns(tmptp) contains Testrun.fromJSON(elem.asInstanceOf[JsObject])))
 					problems.add(Test.problem(new Exception().getStackTrace()(0), "Loading plan failed: wrong run: " + elem))
 			}
@@ -209,16 +214,20 @@ class TestUIInstance {
 					("type", JsString("load run"))
 				,	("id", JsString(tmptrs(j).getID.toString))
 				))
-				val recrun = get
-				if(!recrun.\("type").toString().equals("testrun")) {
-					problems.add(Test.problem(new Exception().getStackTrace()(0), "Load run failed: " + recrun))
-				} else {
-					Testrun.fromJSON(recrun.\("content").asInstanceOf[JsObject]).equals(tmptrs(j))
-					for (k <- 0 until tmptp.getParallelity * tmptp.getNumRuns) {
-						if(!get.\("type").toString().equals("raw"))
-							problems.add(Test.problem(new Exception().getStackTrace()(0), "Too few raws received: " + recrun))
+				var tmprun : Testrun = null
+				for(k <- 0 until tmptp.getNumRuns * tmptp.getParallelity + 1) { // Testrun + Raws
+				val tmpget = get
+					val gettype = JSONHelper.JsStringToString(tmpget.\("type"))
+					if(tmprun == null && gettype.equals("testrun")) {
+						tmprun = Testrun.fromJSON(tmpget.\("content").asInstanceOf[JsObject])
+						if(!tmprun.equals(tmptrs(j)))
+							problems.add(Test.problem(new Exception().getStackTrace()(0), "Wrong testrun definition for run received"))
+					} else if(!gettype.equals("raw")) {
+						problems.add(Test.problem(new Exception().getStackTrace()(0), "Unexpected message in loadRun: " + tmpget))
 					}
 				}
+				if(tmprun == null)
+					problems.add(Test.problem(new Exception().getStackTrace()(0), "No testrun definition for run received"))
 			}
 		}
 	}
