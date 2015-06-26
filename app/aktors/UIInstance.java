@@ -46,7 +46,6 @@ public class UIInstance extends UntypedActor {
 
 	@Override
 	public void onReceive(Object message) throws Exception {
-		// System.out.println("DEBUG: UIInstance " + message);
 		if(message instanceof String) {
 			JsObject json = ((JsObject)Json.parse((String) message));
 			String type = JSONHelper.JsStringToString(json.$bslash("type"));
@@ -68,31 +67,24 @@ public class UIInstance extends UntypedActor {
 					db.tell(dbQuery, getSelf());
 					break;
 				case "logout":
-					// System.out.println("DEBUG: UIInstance Logging out");
-					currentUser = null; // TODO need to stop something else?
+					currentUser = null;
 					ws(JSONHelper.simpleResponse("logout", "Logged out"), getSelf());
-					// System.out.println("DEBUG: UIInstance Logged out");
 					break;
 				case "store plan": // Tested
-					// System.out.println("DEBUG: UIInstance Storing plan");
 					if (currentUser != null) {
 						Testplan tp = Testplan.fromJSON((JsObject) json.$bslash("testplan"));
 						tp.setUser(currentUser);
 						db.tell(tp, getSelf());
-						// System.out.println("DEBUG: UIInstance Stored plan");
 					} else {
 						ws(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
-						// System.out.println("DEBUG: UIInstance NotAuth");
 					}
 					break;
 				case "start run": // Tested
-					// System.out.println("DEBUG: UIInstance Starting run");
 					if (currentUser != null) {
 						DBGetCMD dbGetCMD3 = new DBGetCMD();
 						dbGetCMD3.t = DBGetCMD.Type.PlanByID;
 						dbGetCMD3.id = new ObjectId(JSONHelper.JsStringToString(json.$bslash("testplan")));
 						dbGetCMD3.callback = (testplan) -> {
-							// System.out.println("DEBUG UIIn WS: " + websocket.toString());
 							ActorRef newRunner = as.actorOf(Props.create(
 								LoadRunner.class
 								, as
@@ -103,27 +95,21 @@ public class UIInstance extends UntypedActor {
 							newRunner.tell(RunnerCMD.Start, getSelf());
 						};
 						db.tell(dbGetCMD3, getSelf());
-						// System.out.println("DEBUG: UIInstance Started run");
 					} else {
 						ws(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
-						// System.out.println("DEBUG: UIInstance NotAuth");
 					}
 					break;
 				case "all plans": // Tested
-					// System.out.println("DEBUG: UIInstance Getting all plans");
 					if (currentUser != null) {
 						DBGetCMD dbGetCMD2 = new DBGetCMD();
 						dbGetCMD2.t = DBGetCMD.Type.AllPlansForUser;
 						dbGetCMD2.id = currentUser.getID();
 						db.tell(dbGetCMD2, getSelf());
-						// System.out.println("DEBUG: UIInstance Got all plans");
 					} else {
 						ws(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
-						// System.out.println("DEBUG: UIInstance NotAuth");
 					}
 					break;
-				case "load plan": // Tested (both parts)
-					// System.out.println("DEBUG: UIInstance Loading plan");
+				case "load plan": // Tested
 					if(currentUser != null) {
 						/*DBGetCMD dbGetCMD = new DBGetCMD();
 						dbGetCMD.t = DBGetCMD.Type.PlanByID;
@@ -134,29 +120,23 @@ public class UIInstance extends UntypedActor {
 						dbGetCMD2.t = DBGetCMD.Type.AllRunsForPlan;
 						dbGetCMD2.id = new ObjectId(JSONHelper.JsStringToString(json.$bslash("id"))); // dbGetCMD.id
 						db.tell(dbGetCMD2, getSelf());
-						// System.out.println("DEBUG: UIInstance Loaded plan");
 					} else {
 						ws(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
-						// System.out.println("DEBUG: UIInstance NotAuth");
 					}
 					break;
 				case "load run": // Tested
-					// System.out.println("DEBUG: UIInstance Loading run");
 					if(currentUser != null) {
 						DBGetCMD dbGetCMD1 = new DBGetCMD();
 						dbGetCMD1.t = DBGetCMD.Type.RunByID;
 						dbGetCMD1.id = new ObjectId(JSONHelper.JsStringToString(json.$bslash("id")));
-						db.tell(dbGetCMD1, as.actorOf(Props.create(RunLoader.class, websocket, db))); // TODO seperate db ?
-						// System.out.println("DEBUG: UIInstance Loaded run");
+						db.tell(dbGetCMD1, as.actorOf(Props.create(RunLoader.class, websocket, db)));
 					} else {
 						ws(JSONHelper.simpleResponse("not auth", "Not authenticated"), getSelf());
-						// System.out.println("DEBUG: UIInstance NotAuth");
 					}
 					break;
 				default:
 					websocket.tell("Wrong type: " + type, getSelf());
 					websocket.tell(json.fields().toString(), getSelf());
-					System.err.println("ERROR: UIInstance Wrong type: " + type);
 					// throw new Exception("Wrong input to WebSocket");
 					break;
 			}

@@ -87,7 +87,7 @@ public class Test {
 					new ObjectId(),
 					1 + random.nextInt(5),
 					1 + random.nextInt(10),
-					new URL("http://example.com:1337/test/blub"), // TODO autogen?
+					new URL("http://example.com:1337/test/blub"),
 					random.nextInt(10),
 					random.nextInt(10),
 					ConnectionType.values()[random.nextInt(ConnectionType.values().length)],
@@ -123,10 +123,8 @@ public class Test {
 			Thread.sleep(2000);
 			// insert raw
 			runs.parallelStream().forEach(testrun -> {
-				// List<LoadWorkerRaw> tmps = new ArrayList<>(); // TODO never queried
 				Testplan tmptp = testrun.getTestplan();
 				int numraws = tmptp.getNumRuns() * tmptp.getParallelity();
-				// System.out.println("dbTest insert raws: " + numraws);
 				for (int i = 0; i < numraws; i++) {
 					int rstart = random.nextInt(i + 1);
 					LoadWorkerRaw tmp = new LoadWorkerRaw(
@@ -137,7 +135,6 @@ public class Test {
 					);
 					inbox.send(db_ref, tmp);
 					try {Thread.sleep(tmptp.getWaitBetweenMsgs());} catch(Exception ignored) {}
-					// tmps.add(tmp);
 				}
 			});
 			System.out.println("dbTest raws inserted, starting get user");

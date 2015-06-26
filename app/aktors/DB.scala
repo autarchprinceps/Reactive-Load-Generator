@@ -72,11 +72,11 @@ class DB(database : String = "loadgen") extends UntypedActor {
 							)
 						)
 					}
-					case DBGetCMD.Type.PlanByID => function(getPlan(getCMD.id)) // TODO user check
-					case DBGetCMD.Type.RunByID => function(getRun(getCMD.id)) // TODO user check
-					case DBGetCMD.Type.UserByID => function(getUser(getCMD.id)) // TODO user check
+					case DBGetCMD.Type.PlanByID => function(getPlan(getCMD.id))
+					case DBGetCMD.Type.RunByID => function(getRun(getCMD.id))
+					case DBGetCMD.Type.UserByID => function(getUser(getCMD.id))
 					case DBGetCMD.Type.RunRaws => {
-						val testrunobj = testruncoll.findOneByID(getCMD.id).get // TODO user check
+						val testrunobj = testruncoll.findOneByID(getCMD.id).get
 						val testrunF: Future[Testrun] = Future {
 							convertRun(testrunobj)
 						}

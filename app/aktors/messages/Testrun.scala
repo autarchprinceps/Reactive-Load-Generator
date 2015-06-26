@@ -32,13 +32,13 @@ class Testrun(ID: ObjectId = new ObjectId, Subscribers: List[ActorRef] = new uti
 
 	def getID: ObjectId = ID
 	def getTestplan: Testplan = Await.result(Testplan, Duration(10, TimeUnit.MINUTES))
-	def setTestplan(plan: Testplan) = _testplan = Future {plan} // TODO better?
+	def setTestplan(plan: Testplan) = _testplan = Future {plan}
 	def setTestplan(plan: Future[Testplan]) = _testplan = plan
 	def getSubscribers: List[ActorRef] = Subscribers
 
 	def toJSON: JsObject = toJSON(true)
 	def toJSON(withPlan: Boolean): JsObject =
-		if(withPlan) // TODO better?
+		if(withPlan)
 			Json.obj(
 				"id" -> JsString(ID.toString)
 			,   "testplan" -> getTestplan.toJSON

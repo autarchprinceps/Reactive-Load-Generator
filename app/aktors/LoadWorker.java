@@ -67,7 +67,6 @@ public class LoadWorker extends UntypedActor {
                     } catch (InterruptedException ignored) {
                     }
                 }
-	            // TODO inform runner that finished?
             });
             t.start();
         } else if(message instanceof WorkerCMD) {

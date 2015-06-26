@@ -59,11 +59,11 @@ class Testplan(
 
 	var user: Future[User] = User
 	def getUser: User = Await.result(user, Duration(10, TimeUnit.MINUTES))
-	def setUser(User: User) = user = Future { User } // TODO better
+	def setUser(User: User) = user = Future { User }
 	def setUser(User: Future[User]) = user = User
 
 	def toJSON: JsObject = toJSON(true)
-	def toJSON(withUser: Boolean): JsObject = // TODO duplicate code
+	def toJSON(withUser: Boolean): JsObject =
 	if(withUser)
 		Json.obj(
 			"id" -> JsString(getID.toString)
